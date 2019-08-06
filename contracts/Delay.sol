@@ -16,9 +16,9 @@ contract Delay is AragonApp, IForwarder {
         bytes evmCallScript;
     }
 
-    uint256 executionDelay;
-    uint256 delayedScriptsNewIndex = 0;
-    mapping(uint256 => DelayedScript) delayedScripts;
+    uint256 public executionDelay;
+    uint256 public delayedScriptsNewIndex = 0;
+    mapping(uint256 => DelayedScript) public delayedScripts;
 
     event DelayedScriptStored(uint256 scriptId);
     event ExecutedScript(uint256 scriptId);
