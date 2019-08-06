@@ -71,26 +71,25 @@ contract Template is TemplateBase {
         bytes32 votingAppId = apmNamehash("voting");
         bytes32 tokenManagerAppId = apmNamehash("token-manager");
 
-        Delay app = Delay(dao.newAppInstance(appId, latestVersionAppBase(appId)));
+        Delay delay = Delay(dao.newAppInstance(appId, latestVersionAppBase(appId)));
         Voting voting = Voting(dao.newAppInstance(votingAppId, latestVersionAppBase(votingAppId)));
         TokenManager tokenManager = TokenManager(dao.newAppInstance(tokenManagerAppId, latestVersionAppBase(tokenManagerAppId)));
 
         MiniMeToken token = tokenFactory.createCloneToken(MiniMeToken(0), 0, "App token", 0, "APP", true);
         token.changeController(tokenManager);
 
-        app.initialize(10);
+        delay.initialize(10);
         tokenManager.initialize(token, true, 0);
-        // Initialize apps
         voting.initialize(token, 50 * PCT, 20 * PCT, 1 days);
 
         acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
         tokenManager.mint(root, 1); // Give one token to root
 
         acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), root);
-
-        // TODO: Add Delay Permissions
-
         acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
+
+        acl.createPermission(root, delay, delay.SET_DELAY_ROLE(), root);
+        acl.createPermission(ANY_ENTITY, delay, delay.DELAY_EXECUTION_ROLE(), root);
 
         // Clean up permissions
         acl.grantPermission(root, dao, dao.APP_MANAGER_ROLE());
