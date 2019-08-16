@@ -1,8 +1,7 @@
-
 const Delay = artifacts.require('Delay')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 import DaoDeployment from './helpers/DaoDeployment'
-import {deployedContract, assertRevert, advanceTime} from './helpers/helpers'
+import {deployedContract, assertRevert, timeTravel} from './helpers/helpers'
 import {encodeCallScript} from "@aragon/test-helpers/evmScript";
 
 contract('Delay', ([rootAccount, ...accounts]) => {
@@ -102,7 +101,7 @@ contract('Delay', ([rootAccount, ...accounts]) => {
                 describe('execute(uint256 _delayedScriptId)', () => {
 
                     it('executes the script after the delay has elapsed and deletes script', async () => {
-                        await advanceTime(web3)(INITIAL_DELAY + 3)
+                        await timeTravel(web3)(INITIAL_DELAY + 3)
 
                         await delay.execute(0)
 

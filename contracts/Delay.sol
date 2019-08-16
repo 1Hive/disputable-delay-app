@@ -27,7 +27,7 @@ contract Delay is AragonApp, IForwarder {
     * @notice Initialize the Delay app
     * @param _executionDelay The delay in seconds a user will have to wait before executing a script
     */
-    function initialize(uint256 _executionDelay) public onlyInit {
+    function initialize(uint256 _executionDelay) external onlyInit {
         initialized();
         executionDelay = _executionDelay;
     }
@@ -36,7 +36,7 @@ contract Delay is AragonApp, IForwarder {
     * @notice Set the execution delay to `_executionDelay`
     * @param _executionDelay The new execution delay
     */
-    function setExecutionDelay(uint256 _executionDelay) public auth(SET_DELAY_ROLE) {
+    function setExecutionDelay(uint256 _executionDelay) external auth(SET_DELAY_ROLE) {
         executionDelay = _executionDelay;
     }
 
