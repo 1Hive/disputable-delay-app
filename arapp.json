@@ -1,6 +1,15 @@
 {
   "roles": [
-
+    {
+      "name": "Set delay role",
+      "id": "SET_DELAY_ROLE",
+      "params": []
+    },
+    {
+      "name": "Delay execution role",
+      "id": "DELAY_EXECUTION_ROLE",
+      "params": []
+    }
   ],
   "environments": {
     "default": {
