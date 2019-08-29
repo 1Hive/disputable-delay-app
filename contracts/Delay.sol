@@ -2,18 +2,29 @@ pragma solidity ^0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
+import "@aragon/os/contracts/lib/math/SafeMath.sol";
+
 
 contract Delay is AragonApp, IForwarder {
+    using SafeMath for uint256;
 
     bytes32 public constant SET_DELAY_ROLE = keccak256("SET_DELAY_ROLE");
     bytes32 public constant DELAY_EXECUTION_ROLE = keccak256("DELAY_EXECUTION_ROLE");
+    bytes32 public constant PAUSE_EXECUTION_ROLE = keccak256("PAUSE_EXECUTION_ROLE");
+    bytes32 public constant RESUME_EXECUTION_ROLE = keccak256("RESUME_EXECUTION_ROLE");
+    bytes32 public constant CANCEL_EXECUTION_ROLE = keccak256("CANCEL_EXECUTION_ROLE");
 
+
+    string private constant ERROR_NO_SCRIPT = "DELAY_NO_SCRIPT";
     string private constant ERROR_CAN_NOT_EXECUTE = "DELAY_CAN_NOT_EXECUTE";
+    string private constant ERROR_CAN_NOT_PAUSE = "DELAY_CAN_NOT_PAUSE";
+    string private constant ERROR_CAN_NOT_RESUME = "DELAY_CAN_NOT_RESUME";
     string private constant ERROR_CAN_NOT_FORWARD = "DELAY_CAN_NOT_FORWARD";
 
     struct DelayedScript {
-        uint256 timeSubmitted;
+        uint256 executionTime;
         bytes evmCallScript;
+        uint256 pausedAt;
     }
 
     uint256 public executionDelay;
@@ -22,12 +33,20 @@ contract Delay is AragonApp, IForwarder {
 
     event DelayedScriptStored(uint256 scriptId);
     event ExecutedScript(uint256 scriptId);
+    event ExecutionPaused(uint256 scriptId);
+    event ExecutionResumed(uint256 scriptId);
+    event ExecutionCancelled(uint256 scriptId);
+
+    modifier scriptExists(uint256 _scriptId) {
+        require(delayedScripts[_scriptId].executionTime != 0, ERROR_NO_SCRIPT);
+        _;
+    }
 
     /**
     * @notice Initialize the Delay app
     * @param _executionDelay The delay in seconds a user will have to wait before executing a script
     */
-    function initialize(uint256 _executionDelay) external onlyInit {
+    function initialize(uint256 _executionDelay) public onlyInit {
         initialized();
         executionDelay = _executionDelay;
     }
@@ -36,7 +55,7 @@ contract Delay is AragonApp, IForwarder {
     * @notice Set the execution delay to `_executionDelay`
     * @param _executionDelay The new execution delay
     */
-    function setExecutionDelay(uint256 _executionDelay) external auth(SET_DELAY_ROLE) {
+    function setExecutionDelay(uint256 _executionDelay) public auth(SET_DELAY_ROLE) {
         executionDelay = _executionDelay;
     }
 
@@ -52,7 +71,7 @@ contract Delay is AragonApp, IForwarder {
         return true;
     }
 
-    function canForward(address _sender, bytes _evmCallScript) public view returns (bool) {
+    function canForward(address _sender, bytes) public view returns (bool) {
         return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
     }
 
@@ -69,11 +88,33 @@ contract Delay is AragonApp, IForwarder {
         uint256 delayedScriptIndex = delayedScriptsNewIndex;
         delayedScriptsNewIndex++;
 
-        delayedScripts[delayedScriptIndex] = DelayedScript(now, _evmCallScript);
+        delayedScripts[delayedScriptIndex] = DelayedScript(now.add(executionDelay) , _evmCallScript, 0);
 
         emit DelayedScriptStored(delayedScriptIndex);
 
         return delayedScriptIndex;
+    }
+
+    /**
+    * @notice Pause the script execution with ID `_delayedScriptId`
+    * @param _delayedScriptId The ID of the script execution to pause
+    */
+    function pauseExecution(uint256 _delayedScriptId) external auth(PAUSE_EXECUTION_ROLE) {
+        require(canPause(_delayedScriptId), ERROR_CAN_NOT_PAUSE);
+        _pauseExecution(_delayedScriptId);
+    }
+
+    /**
+    * @notice Resume a paused script execution with ID `_delayedScriptId`
+    * @param _delayedScriptId The ID of the script execution to resume
+    */
+    function resumeExecution(uint256 _delayedScriptId) external auth(RESUME_EXECUTION_ROLE) {
+        require(canResume(_delayedScriptId), ERROR_CAN_NOT_RESUME);
+        _resumeExecution(_delayedScriptId);
+    }
+
+    function cancelExecution(uint256 _delayedScriptId) auth(CANCEL_EXECUTION_ROLE) {
+        _cancelExecution(_delayedScriptId);
     }
 
     /**
@@ -90,13 +131,49 @@ contract Delay is AragonApp, IForwarder {
         emit ExecutedScript(_delayedScriptId);
     }
 
-    function canExecute(uint256 _scriptId) public returns (bool) {
+    function canPause(uint256 _scriptId) public view scriptExists(_scriptId) returns (bool) {
+        return !_isExecutionPaused(_scriptId);
+    }
+
+    function canResume(uint256 _scriptId) public view scriptExists(_scriptId) returns (bool) {
+        return _isExecutionPaused(_scriptId);
+    }
+
+    /**
+    * @notice Tells whether a script with ID #`_scriptId` can be executed or not
+    * @param _scriptId The ID of the script to execute
+    */
+    function canExecute(uint256 _scriptId) public scriptExists(_scriptId) returns (bool) {
+
+        if (_isExecutionPaused(_scriptId))
+            return false;
+
+        bool withinExecutionWindow = now > delayedScripts[_scriptId].executionTime;
+        return withinExecutionWindow;
+    }
+
+    function _isExecutionPaused(uint256 _scriptId) internal view returns (bool) {
+        return delayedScripts[_scriptId].pausedAt != 0;
+    }
+
+    function _pauseExecution(uint256 _scriptId) internal {
+        delayedScripts[_scriptId].pausedAt = now;
+        emit ExecutionPaused(_scriptId);
+    }
+
+    function _resumeExecution(uint256 _scriptId) internal {
         DelayedScript storage delayedScript = delayedScripts[_scriptId];
 
-        bool delayedScriptExists = delayedScript.timeSubmitted != 0;
-        bool withinExecutionWindow = now > delayedScript.timeSubmitted + executionDelay;
+        delayedScript.executionTime = delayedScript.executionTime.add(now.sub(delayedScript.pausedAt));
+        delayedScript.pausedAt = 0;
 
-        return delayedScriptExists && withinExecutionWindow;
+        emit ExecutionResumed(_scriptId);
+    }
+
+    function _cancelExecution(uint256 _scriptId) internal {
+        delete delayedScripts[_scriptId];
+
+        emit ExecutionCancelled(_scriptId);
     }
 
 }
