@@ -240,6 +240,15 @@ contract('Delay', ([rootAccount, ...accounts]) => {
             assert.equal(actualPausedAt, 0)
           })
 
+          it('executes the script after execution is resumed', async () => {
+            await timeTravel(web3)(INITIAL_DELAY + 3)
+
+            await delay.pauseExecution(0)
+            await delay.resumeExecution(0)
+
+            await delay.execute(0)
+          })
+
           it('reverts when script does not exist', async () => {
             await assertRevert(delay.execute(1), 'DELAY_NO_SCRIPT')
           })
@@ -249,8 +258,18 @@ contract('Delay', ([rootAccount, ...accounts]) => {
           })
 
           it('reverts when executing paused script', async () => {
+            await timeTravel(web3)(INITIAL_DELAY + 3)
+
             await delay.pauseExecution(0)
+
             await assertRevert(delay.execute(0), 'DELAY_CAN_NOT_EXECUTE')
+          })
+
+          it('reverts when executing cancelled script', async () => {
+            await timeTravel(web3)(INITIAL_DELAY + 3)
+            await delay.cancelExecution(0)
+
+            await assertRevert(delay.execute(0), 'DELAY_NO_SCRIPT')
           })
         })
       })
