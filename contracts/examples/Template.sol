@@ -20,7 +20,7 @@ import "@aragon/apps-voting/contracts/Voting.sol";
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
 import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
-import "./Delay.sol";
+import "../Delay.sol";
 
 
 contract TemplateBase is APMNamehash {
