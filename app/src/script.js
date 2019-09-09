@@ -63,9 +63,7 @@ function initializeState(state, tokenContract) {
  ***********************/
 
 async function getDelaySettings() {
-  const delay = await app.call("executionDelay").toPromise();
-  console.log("DELAAAAAY ", delay);
-  return delay;
+  return await app.call("executionDelay").toPromise();
 }
 
 function getBlockNumber() {

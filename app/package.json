@@ -1,5 +1,5 @@
 {
-  "name": "lock-frontend",
+  "name": "delay-frontend",
   "version": "1.0.0",
   "main": "src/index.js",
   "dependencies": {
