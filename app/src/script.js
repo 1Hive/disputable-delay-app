@@ -1,35 +1,105 @@
 import 'core-js/stable'
 import 'regenerator-runtime/runtime'
-import AragonApi from '@aragon/api'
+import Aragon, { events } from '@aragon/api'
+import delaySettings from './lib/delay-settings'
 
-const api = new AragonApi()
+const app = new Aragon()
 
-const initialState = async (state) => ({
-    count: await getValue()
-})
+initialize()
 
-api.store(
-    async (state, event) => {
-        let newState
+async function initialize() {
+  return createStore()
+}
 
-        switch (event.event) {
-            case 'Increment':
-                newState = {count: await getValue()}
-                break
-            case 'Decrement':
-                newState = {count: await getValue()}
-                break
-            default:
-                newState = state
-        }
+async function createStore(executionDelay) {
+  const currentBlock = await getBlockNumber()
 
-        return newState
+  return app.store(
+    (state, { event, returnValues, blockNumber }) => {
+      //dont want to listen for past events for now
+      //(our app state can be obtained from smart contract vars)
+      if (blockNumber && blockNumber <= currentBlock) return state
+
+      let nextState = {
+        ...state,
+      }
+
+      switch (event) {
+        case events.ACCOUNTS_TRIGGER:
+          return { ...nextState }
+        case events.SYNC_STATUS_SYNCING:
+          return { ...nextState, isSyncing: true }
+        case events.SYNC_STATUS_SYNCED:
+          return { ...nextState, isSyncing: false }
+        case 'DelayedScriptStored':
+          return
+        case 'ExecutedScript':
+          return
+        case 'ExecutionPaused':
+          return
+        case 'WithdrExecutionResumedawal':
+          return
+        case 'ExecutionCancelled':
+          return
+        default:
+          return state
+      }
     },
     {
-        init: initialState
+      init: initializeState({}),
     }
-)
+  )
+}
 
-async function getValue() {
-    return parseInt(await api.call('value').toPromise(), 10)
+/***********************
+ *                     *
+ *   Event Handlers    *
+ *                     *
+ ***********************/
+
+function initializeState(state, tokenContract) {
+  return async cachedState => {
+    return {
+      ...state,
+      ...(await getDelaySettings()),
+      isSyncing: true,
+    }
+  }
+}
+
+/***********************
+ *                     *
+ *       Helpers       *
+ *                     *
+ ***********************/
+
+async function getDelaySettings() {
+  return Promise.all(
+    delaySettings.map(([name, key, type = 'string']) =>
+      app
+        .call(name)
+        .toPromise()
+        .then(val => (type === 'time' ? marshallDate(val) : val))
+        .then(value => ({ [key]: value }))
+    )
+  )
+    .then(settings =>
+      settings.reduce((acc, setting) => ({ ...acc, ...setting }), {})
+    )
+    .catch(err => {
+      console.error('Failed to load lock settings', err)
+      // Return an empty object to try again later
+      return {}
+    })
+}
+
+function getBlockNumber() {
+  return new Promise((resolve, reject) =>
+    app.web3Eth('getBlockNumber').subscribe(resolve, reject)
+  )
+}
+
+function marshallDate(date) {
+  // Adjust for js time (in ms vs s)
+  return parseInt(date, 10) * 1000
 }
