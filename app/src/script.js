@@ -1,35 +1,75 @@
-import 'core-js/stable'
-import 'regenerator-runtime/runtime'
-import AragonApi from '@aragon/api'
+import "core-js/stable";
+import "regenerator-runtime/runtime";
+import Aragon, { events } from "@aragon/api";
 
-const api = new AragonApi()
+const app = new Aragon();
 
-const initialState = async (state) => ({
-    count: await getValue()
-})
+initialize();
 
-api.store(
-    async (state, event) => {
-        let newState
+async function initialize() {
+  return createStore();
+}
 
-        switch (event.event) {
-            case 'Increment':
-                newState = {count: await getValue()}
-                break
-            case 'Decrement':
-                newState = {count: await getValue()}
-                break
-            default:
-                newState = state
-        }
+async function createStore() {
+  const currentBlock = await getBlockNumber();
 
-        return newState
+  return app.store(
+    (state, { event, returnValues, blockNumber }) => {
+      //dont want to listen for past events for now
+      //(our app state can be obtained from smart contract vars)
+      if (blockNumber && blockNumber <= currentBlock) return state;
+
+      let nextState = {
+        ...state
+      };
+
+      switch (event) {
+        case events.ACCOUNTS_TRIGGER:
+          return { ...nextState };
+        case events.SYNC_STATUS_SYNCING:
+          return { ...nextState, isSyncing: true };
+        case events.SYNC_STATUS_SYNCED:
+          return { ...nextState, isSyncing: false };
+        default:
+          return state;
+      }
     },
     {
-        init: initialState
+      init: initializeState({})
     }
-)
+  );
+}
 
-async function getValue() {
-    return parseInt(await api.call('value').toPromise(), 10)
+/***********************
+ *                     *
+ *   Event Handlers    *
+ *                     *
+ ***********************/
+
+function initializeState(state, tokenContract) {
+  return async cachedState => {
+    return {
+      ...state,
+      executionDelay: await getDelaySettings(),
+      isSyncing: true
+    };
+  };
+}
+
+/***********************
+ *                     *
+ *       Helpers       *
+ *                     *
+ ***********************/
+
+async function getDelaySettings() {
+  const delay = await app.call("executionDelay").toPromise();
+  console.log("DELAAAAAY ", delay);
+  return delay;
+}
+
+function getBlockNumber() {
+  return new Promise((resolve, reject) =>
+    app.web3Eth("getBlockNumber").subscribe(resolve, reject)
+  );
 }
