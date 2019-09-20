@@ -1,7 +1,5 @@
-const delaySettings = [
-  ['executionDelay', 'executionDelay', 'time'],
-  ['delayedScriptsNewIndex', 'delayedScriptsNewIndex'],
-]
+//contract getter | variableName | data type
+const delaySettings = [['executionDelay', 'executionDelay', 'time']]
 
 export function hasLoadedDelaySettings(state) {
   state = state || {}

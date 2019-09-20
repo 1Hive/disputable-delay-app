@@ -9,7 +9,7 @@
     "@aragon/apps-voting": "2.1.0"
   },
   "devDependencies": {
-    "@aragon/cli": "^5.9.7",
+    "@aragon/cli": "^6.3.1",
     "@aragon/test-helpers": "^2.0.0",
     "@babel/core": "^7.4.4",
     "@babel/polyfill": "^7.4.4",
@@ -28,12 +28,12 @@
     "eslint-plugin-react": "^7.14.2",
     "eslint-plugin-standard": "^4.0.0",
     "ethlint": "^1.2.4",
+    "ganache-cli": "^6.7.0",
     "prettier": "^1.18.2",
     "solidity-coverage": "^0.6.2",
     "truffle": "^5.0.1"
   },
   "scripts": {
-    "prepublishOnly": "aragon contracts compile",
     "start": "npm run start:ipfs",
     "start:ipfs": "aragon run",
     "start:http": "aragon run --http localhost:8001 --http-served-from ./dist",
@@ -43,6 +43,7 @@
     "start:app": "cd app && npm start && cd ..",
     "test": "cross-env TRUFFLE_TEST=true npm run ganache-cli:test",
     "compile": "aragon contracts compile",
+    "clean": "rm -rf build && rm -rf dist",
     "build": "cd app && npm run build && cd ..",
     "publish:patch": "aragon apm publish patch",
     "publish:minor": "aragon apm publish minor",

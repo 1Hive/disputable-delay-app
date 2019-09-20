@@ -11,19 +11,14 @@ async function initialize() {
   return createStore()
 }
 
-async function createStore(executionDelay) {
-  const currentBlock = await getBlockNumber()
-
+async function createStore() {
   return app.store(
-    (state, { event, returnValues, blockNumber }) => {
-      //dont want to listen for past events for now
-      //(our app state can be obtained from smart contract vars)
-      if (blockNumber && blockNumber <= currentBlock) return state
-
+    (state, { event, returnValues }) => {
       let nextState = {
         ...state,
       }
 
+      try {
       switch (event) {
         case events.ACCOUNTS_TRIGGER:
           return { ...nextState }
@@ -31,18 +26,23 @@ async function createStore(executionDelay) {
           return { ...nextState, isSyncing: true }
         case events.SYNC_STATUS_SYNCED:
           return { ...nextState, isSyncing: false }
+        case 'ChangeExecutionDelay':
+          return { ...nextState, executionDelay: returnValues.executionDelay }
         case 'DelayedScriptStored':
-          return
-        case 'ExecutedScript':
-          return
+          return newScript(nextState, returnValues)
         case 'ExecutionPaused':
-          return
-        case 'WithdrExecutionResumedawal':
-          return
+          return updateScript(nextState, returnValues)
+        case 'ExecutionResumed':
+          return updateScript(nextState, returnValues)
+        case 'ExecutedScript':
+          return removeScript(nextState, returnValues)
         case 'ExecutionCancelled':
-          return
+          return removeScript(nextState, returnValues)
         default:
           return state
+      }
+      } catch (err) {
+        console.log(err)
       }
     },
     {
@@ -63,7 +63,48 @@ function initializeState(state, tokenContract) {
       ...state,
       ...(await getDelaySettings()),
       isSyncing: true,
+      delayedScripts: [],
     }
+  }
+}
+
+async function newScript(state, { scriptId }) {
+  const { delayedScripts } = state
+  const delayedScript = await getScript(scriptId)
+
+  return {
+    ...state,
+    delayedScripts:
+      delayedScript.executionTime > 0
+        ? [...delayedScripts, delayedScript]
+        : delayedScripts,
+  }
+}
+
+async function updateScript(state, { scriptId }) {
+  const { delayedScripts } = state
+  let index = delayedScripts.findIndex(script => script.id === scriptId)
+
+  return {
+    ...state,
+    delayedScripts: [
+      ...delayedScripts.slice(0, index),
+      await getScript(scriptId),
+      ...delayedScripts.slice(index + 1),
+    ],
+  }
+}
+
+function removeScript(state, { scriptId }) {
+  const { delayedScripts } = state
+  let index = delayedScripts.findIndex(script => script.id === scriptId)
+
+  return {
+    ...state,
+    delayedScripts: [
+      ...delayedScripts.slice(0, index),
+      ...delayedScripts.slice(index + 1),
+    ],
   }
 }
 
@@ -72,6 +113,19 @@ function initializeState(state, tokenContract) {
  *       Helpers       *
  *                     *
  ***********************/
+
+async function getScript(scriptId) {
+  const { executionTime, evmCallScript, pausedAt } = await app
+    .call('delayedScripts', scriptId)
+    .toPromise()
+  
+  return {
+    id: scriptId,
+    executionTime: marshallDate(executionTime),
+    evmCallScript,
+    pausedAt: marshallDate(pausedAt),
+  }
+}
 
 async function getDelaySettings() {
   return Promise.all(
@@ -91,12 +145,6 @@ async function getDelaySettings() {
       // Return an empty object to try again later
       return {}
     })
-}
-
-function getBlockNumber() {
-  return new Promise((resolve, reject) =>
-    app.web3Eth('getBlockNumber').subscribe(resolve, reject)
-  )
 }
 
 function marshallDate(date) {
