@@ -1,52 +1,29 @@
 import React from 'react'
-import { useAragonApi } from '@aragon/api-react'
-import { Main, Button } from '@aragon/ui'
+import { useAragonApi, useAppState } from '@aragon/api-react'
+import { Main, Header, Button, SyncIndicator, SidePanel } from '@aragon/ui'
+import { useAppLogic } from './hooks/app-hooks'
+
+import Delays from './components/Delays'
+import Title from './components/Title'
 import styled from 'styled-components'
 
 function App() {
-  const { api, appState } = useAragonApi()
-  const { count, syncing } = appState
+  const { delayedScripts, panelState, isSyncing, actions } = useAppLogic()
+
   return (
     <Main>
-      <BaseLayout>
-        {syncing && <Syncing />}
-        <Count>Count: {count}</Count>
-        <Buttons>
-          <Button mode="secondary" onClick={() => api.decrement(1)}>
-            Decrement
-          </Button>
-          <Button mode="secondary" onClick={() => api.increment(1)}>
-            Increment
-          </Button>
-        </Buttons>
-      </BaseLayout>
+      <SyncIndicator visible={isSyncing} />
+      <Header primary={<Title text="Delay" />} />
+      {delayedScripts && delayedScripts.length > 0 ? <Delays scripts={delayedScripts} actions={actions}/> : null}
+
+      <SidePanel
+        title="Withdraw"
+        opened={panelState.visible}
+        onClose={panelState.requestClose}
+        onTransitionEnd={panelState.endTransition}
+      />
     </Main>
   )
 }
-
-const BaseLayout = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  flex-direction: column;
-`
-
-const Count = styled.h1`
-  font-size: 30px;
-`
-
-const Buttons = styled.div`
-  display: grid;
-  grid-auto-flow: column;
-  grid-gap: 40px;
-  margin-top: 20px;
-`
-
-const Syncing = styled.div.attrs({ children: 'Syncing…' })`
-  position: absolute;
-  top: 15px;
-  right: 20px;
-`
 
 export default App
