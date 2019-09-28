@@ -10,6 +10,49 @@ An example of a configuration which creates an internal dispute resolution proce
 
 <br />
 
+## External Contract Dependencies
+
+The Delay app relies on the following external libraries.
+
+### Audited External Contracts
+
+```
+import "@aragon/os/contracts/apps/AragonApp.sol";
+import "@aragon/os/contracts/common/IForwarder.sol";
+import "@aragon/os/contracts/lib/math/SafeMath.sol";
+```
+
+These contracts have been audited by 3rd parties. Information on past Aragon audits can be found at the following locations:
+- https://github.com/aragon/security-review/blob/master/past-reports.md
+- https://wiki.aragon.org/association/security/
+
+<br />
+
+## Globally Scoped Variables
+
+Copypasta the contract's constants. Then explain each one with a code comment.
+```
+```
+
+<br />
+
+## Key Concepts
+
+Key concepts that are non-obvious and/or essential to understanding the architecture of the contract.
+
+### DelayedScript Struct
+
+This is the struct for a delay. It keeps track of the time left until the script can be forwarded, the script to forward, and the time that the script was paused at.
+```
+struct DelayedScript {
+		uint256 executionTime;
+		bytes evmCallScript;
+		uint256 pausedAt;
+}
+```
+
+<br />
+
 ## Initialization
 
 Info on the initialization parameters.
@@ -34,5 +77,11 @@ Info on the function, it's inputs, any state changes or outputs, and anything el
 ```
 // the exact code that was just described above
 ```
+
+<br />
+
+## Questions, Comments, and Concerns
+
+If you'd like to talk to us about this contract, please reach out to our [insert team chat channel here].
 
 <br />
