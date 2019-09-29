@@ -127,6 +127,42 @@ function initialize(uint256 _executionDelay) external onlyInit {
 
 <br />
 
+## Forwarding
+
+### isForwarder
+
+This makes the Delay app an [Aragon forwarder](https://hack.aragon.org/docs/forwarding-intro).
+```
+function isForwarder() external pure returns (bool) {
+		return true;
+}
+```
+
+### canForward
+
+This grants an address the ability to create create delayed forwarding intents via the Delay app.
+```
+function canForward(address _sender, bytes) public view returns (bool) {
+		return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
+}
+```
+
+### forward
+
+This allows an external account with the `DELAY_EXECUTION_ROLE` to create a delayed intent to forward.
+```
+/**
+* @notice Store script `_evmCallScript` for delayed execution
+* @param _evmCallScript The script that can be executed after a delay
+*/
+function forward(bytes _evmCallScript) public {
+		require(canForward(msg.sender, _evmCallScript), ERROR_CAN_NOT_FORWARD);
+		_delayExecution(_evmCallScript);
+}
+```
+
+<br />
+
 ## Executing Delayed Scripts
 
 ### setExecutionDelay
@@ -180,42 +216,6 @@ function execute(uint256 _delayedScriptId) external {
 		delete delayedScripts[_delayedScriptId];
 
 		emit ExecutedScript(_delayedScriptId);
-}
-```
-
-<br />
-
-## Forwarding
-
-### isForwarder
-
-This makes the Delay app an [Aragon forwarder](https://hack.aragon.org/docs/forwarding-intro).
-```
-function isForwarder() external pure returns (bool) {
-		return true;
-}
-```
-
-### canForward
-
-This grants an address the ability to create create delayed forwarding intents via the Delay app.
-```
-function canForward(address _sender, bytes) public view returns (bool) {
-		return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
-}
-```
-
-### forward
-
-This allows an external account with the `DELAY_EXECUTION_ROLE` to create a delayed intent to forward.
-```
-/**
-* @notice Store script `_evmCallScript` for delayed execution
-* @param _evmCallScript The script that can be executed after a delay
-*/
-function forward(bytes _evmCallScript) public {
-		require(canForward(msg.sender, _evmCallScript), ERROR_CAN_NOT_FORWARD);
-		_delayExecution(_evmCallScript);
 }
 ```
 
