@@ -59,9 +59,9 @@ Key concepts that are non-obvious and/or essential to understanding the architec
 This is the struct for a delay. It keeps track of the time left until the script can be forwarded, the script to forward, and the time that the script was paused at.
 ```
 struct DelayedScript {
-		uint256 executionTime;
-		bytes evmCallScript;
-		uint256 pausedAt;
+	uint256 executionTime;
+	bytes evmCallScript;
+	uint256 pausedAt;
 }
 ```
 
@@ -85,15 +85,15 @@ mapping(uint256 => DelayedScript) public delayedScripts;
 
 Events are emitted when the following functions are called.
 ```
-// explanation TBD
+// a new `DelayedScript` struct is stored in the `delayedScripts` mapping
 event DelayedScriptStored(uint256 scriptId);
-// explanation TBD
+// a `DelayedScript` has been executed (and thus is no longer delayed)
 event ExecutedScript(uint256 scriptId);
-// explanation TBD
+// a `DelayedScript` has been paused
 event ExecutionPaused(uint256 scriptId);
-// explanation TBD
+// a paused `DelayedScript` has been resumed
 event ExecutionResumed(uint256 scriptId);
-// explanation TBD
+// a `DelayedScript` has been cancelled
 event ExecutionCancelled(uint256 scriptId);
 ```
 
@@ -104,8 +104,8 @@ event ExecutionCancelled(uint256 scriptId);
 The `scriptExists` modifier checks that a live (pending future execution) delayedScript struct exists
 ```
 modifier scriptExists(uint256 _scriptId) {
-		require(delayedScripts[_scriptId].executionTime != 0, ERROR_NO_SCRIPT);
-		_;
+	require(delayedScripts[_scriptId].executionTime != 0, ERROR_NO_SCRIPT);
+	_;
 }
 ```
 
@@ -120,8 +120,8 @@ The Delay app is initialized with the `_executionDealy` parameter. This defines 
 * @param _executionDelay The delay in seconds a user will have to wait before executing a script
 */
 function initialize(uint256 _executionDelay) external onlyInit {
-		initialized();
-		executionDelay = _executionDelay;
+	initialized();
+	executionDelay = _executionDelay;
 }
 ```
 
@@ -134,7 +134,7 @@ function initialize(uint256 _executionDelay) external onlyInit {
 This makes the Delay app an [Aragon forwarder](https://hack.aragon.org/docs/forwarding-intro).
 ```
 function isForwarder() external pure returns (bool) {
-		return true;
+	return true;
 }
 ```
 
@@ -143,7 +143,7 @@ function isForwarder() external pure returns (bool) {
 This grants an address the ability to create create delayed forwarding intents via the Delay app.
 ```
 function canForward(address _sender, bytes) public view returns (bool) {
-		return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
+	return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
 }
 ```
 
@@ -156,8 +156,8 @@ This allows an external account with the `DELAY_EXECUTION_ROLE` to create a dela
 * @param _evmCallScript The script that can be executed after a delay
 */
 function forward(bytes _evmCallScript) public {
-		require(canForward(msg.sender, _evmCallScript), ERROR_CAN_NOT_FORWARD);
-		_delayExecution(_evmCallScript);
+	require(canForward(msg.sender, _evmCallScript), ERROR_CAN_NOT_FORWARD);
+	_delayExecution(_evmCallScript);
 }
 ```
 
@@ -176,7 +176,7 @@ Only addresses that have been given the `SET_DELAY_ROLE` are allowed to call thi
 * @param _executionDelay The new execution delay
 */
 function setExecutionDelay(uint256 _executionDelay) external auth(SET_DELAY_ROLE) {
-		executionDelay = _executionDelay;
+	executionDelay = _executionDelay;
 }
 ```
 
@@ -190,11 +190,11 @@ This returns a boolean that tells the caller if a certain `scriptId` can or cann
 */
 function canExecute(uint256 _scriptId) public scriptExists(_scriptId) returns (bool) {
 
-		if (_isExecutionPaused(_scriptId))
-				return false;
+	if (_isExecutionPaused(_scriptId))
+			return false;
 
-		bool withinExecutionWindow = now > delayedScripts[_scriptId].executionTime;
-		return withinExecutionWindow;
+	bool withinExecutionWindow = now > delayedScripts[_scriptId].executionTime;
+	return withinExecutionWindow;
 }
 ```
 
@@ -209,13 +209,13 @@ An event is emitted upon successful execution.
 * @param _delayedScriptId The ID of the script to execute
 */
 function execute(uint256 _delayedScriptId) external {
-		require(canExecute(_delayedScriptId), ERROR_CAN_NOT_EXECUTE);
+	require(canExecute(_delayedScriptId), ERROR_CAN_NOT_EXECUTE);
 
-		runScript(delayedScripts[_delayedScriptId].evmCallScript, new bytes(0), new address[](0));
+	runScript(delayedScripts[_delayedScriptId].evmCallScript, new bytes(0), new address[](0));
 
-		delete delayedScripts[_delayedScriptId];
+	delete delayedScripts[_delayedScriptId];
 
-		emit ExecutedScript(_delayedScriptId);
+	emit ExecutedScript(_delayedScriptId);
 }
 ```
 
@@ -232,7 +232,7 @@ This is a wrapper for the `_delayExecution` function. This allows external accou
 * @param _evmCallScript The script that can be executed after a delay
 */
 function delayExecution(bytes _evmCallScript) external auth(DELAY_EXECUTION_ROLE) returns (uint256) {
-		return _delayExecution(_evmCallScript);
+	return _delayExecution(_evmCallScript);
 }
 ```
 
@@ -245,14 +245,14 @@ This is an internal function that is only meant to be called via a wrapper funct
 This function delays an `_evmCallScript`. It does this by incrementing the `delayedScriptIndex`, then creating a `delayedScript` struct, then adding the `delayedScript` to the array of `delayedScripts` and mapping it to the newly incremented `delayedScriptIndex`. It then emits an event stating the index of the delayed script that was stored. Then it returns the `delayedScriptIndex` because [insert reason here].
 ```
 function _delayExecution(bytes _evmCallScript) internal returns (uint256) {
-		uint256 delayedScriptIndex = delayedScriptsNewIndex;
-		delayedScriptsNewIndex++;
+	uint256 delayedScriptIndex = delayedScriptsNewIndex;
+	delayedScriptsNewIndex++;
 
-		delayedScripts[delayedScriptIndex] = DelayedScript(now.add(executionDelay) , _evmCallScript, 0);
+	delayedScripts[delayedScriptIndex] = DelayedScript(now.add(executionDelay) , _evmCallScript, 0);
 
-		emit DelayedScriptStored(delayedScriptIndex);
+	emit DelayedScriptStored(delayedScriptIndex);
 
-		return delayedScriptIndex;
+	return delayedScriptIndex;
 }
 ```
 
@@ -267,7 +267,7 @@ This returns a boolean that tells the caller if a certain `_scriptId` can or can
 The `_scriptId` must be a script within the `delayedScripts` mapping.
 ```
 function canPause(uint256 _scriptId) public view scriptExists(_scriptId) returns (bool) {
-		return !_isExecutionPaused(_scriptId);
+	return !_isExecutionPaused(_scriptId);
 }
 ```
 
@@ -276,7 +276,7 @@ function canPause(uint256 _scriptId) public view scriptExists(_scriptId) returns
 This returns a boolean that tells the caller if a certain `scriptId` is or is not paused.
 ```
 function _isExecutionPaused(uint256 _scriptId) internal view returns (bool) {
-		return delayedScripts[_scriptId].pausedAt != 0;
+	return delayedScripts[_scriptId].pausedAt != 0;
 }
 ```
 
@@ -293,8 +293,8 @@ If all checks pass, the `_pauseExecution()` function will be called to actually 
 * @param _delayedScriptId The ID of the script execution to pause
 */
 function pauseExecution(uint256 _delayedScriptId) external auth(PAUSE_EXECUTION_ROLE) {
-		require(canPause(_delayedScriptId), ERROR_CAN_NOT_PAUSE);
-		_pauseExecution(_delayedScriptId);
+	require(canPause(_delayedScriptId), ERROR_CAN_NOT_PAUSE);
+	_pauseExecution(_delayedScriptId);
 }
 ```
 
@@ -305,8 +305,8 @@ This function pauses the `DelayedScript` struct that is mapped to `_scriptId` in
 An event is emitted upon successful execution.
 ```
 function _pauseExecution(uint256 _scriptId) internal {
-		delayedScripts[_scriptId].pausedAt = now;
-		emit ExecutionPaused(_scriptId);
+	delayedScripts[_scriptId].pausedAt = now;
+	emit ExecutionPaused(_scriptId);
 }
 ```
 
@@ -321,7 +321,7 @@ This returns a boolean that tells the caller if a certain `_scriptId` can or can
 The `_scriptId` must be a script within the `delayedScripts` mapping.
 ```
 function canResume(uint256 _scriptId) public view scriptExists(_scriptId) returns (bool) {
-		return _isExecutionPaused(_scriptId);
+	return _isExecutionPaused(_scriptId);
 }
 ```
 
@@ -338,8 +338,8 @@ If all checks pass, the `_resumeExecution()` function will be called to actually
 * @param _delayedScriptId The ID of the script execution to resume
 */
 function resumeExecution(uint256 _delayedScriptId) external auth(RESUME_EXECUTION_ROLE) {
-		require(canResume(_delayedScriptId), ERROR_CAN_NOT_RESUME);
-		_resumeExecution(_delayedScriptId);
+	require(canResume(_delayedScriptId), ERROR_CAN_NOT_RESUME);
+	_resumeExecution(_delayedScriptId);
 }
 ```
 
@@ -350,13 +350,13 @@ This resumes a paused `DelayedScript`. It does this by calculating the time that
 An event is emitted upon successful execution.
 ```
 function _resumeExecution(uint256 _scriptId) internal {
-		DelayedScript storage delayedScript = delayedScripts[_scriptId];
+	DelayedScript storage delayedScript = delayedScripts[_scriptId];
 
-		uint256 timePaused = now.sub(delayedScript.pausedAt);
-		delayedScript.executionTime = delayedScript.executionTime.add(timePaused);
-		delayedScript.pausedAt = 0;
+	uint256 timePaused = now.sub(delayedScript.pausedAt);
+	delayedScript.executionTime = delayedScript.executionTime.add(timePaused);
+	delayedScript.pausedAt = 0;
 
-		emit ExecutionResumed(_scriptId);
+	emit ExecutionResumed(_scriptId);
 }
 ```
 
@@ -371,7 +371,7 @@ This is a wrapper for external calls (other Aragon apps or address with the `CAN
 It first checks if the caller has the `CANCEL_EXECUTION_ROLE`. If so then `_cancelExecution()` is called to actually cancel the paused `delayedScript`.
 ```
 function cancelExecution(uint256 _delayedScriptId) external auth(CANCEL_EXECUTION_ROLE) {
-		_cancelExecution(_delayedScriptId);
+	_cancelExecution(_delayedScriptId);
 }
 ```
 
@@ -382,9 +382,9 @@ This function cancels a `DelayedScript`. It does this by deleting the `_scriptId
 An event is emitted upon successful execution.
 ```
 function _cancelExecution(uint256 _scriptId) internal {
-		delete delayedScripts[_scriptId];
+	delete delayedScripts[_scriptId];
 
-		emit ExecutionCancelled(_scriptId);
+	emit ExecutionCancelled(_scriptId);
 }
 ```
 
@@ -392,6 +392,6 @@ function _cancelExecution(uint256 _scriptId) internal {
 
 ## Questions, Comments, and Concerns
 
-If you'd like to talk to us about this contract, please reach out to our [insert team chat channel here].
+If you'd like to talk to us about this contract, please reach out to our dev team. The best place to reach us is the #dev channel on [1Hive Keybase chat](https://1hive.org/contribute/keybase).
 
 <br />
