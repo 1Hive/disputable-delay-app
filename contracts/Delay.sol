@@ -112,6 +112,10 @@ contract Delay is AragonApp, IForwarder {
         _resumeExecution(_delayedScriptId);
     }
 
+    /**
+    * @notice Cancel script execution with ID `_delayedScriptId`
+    * @param _delayedScriptId The ID of the script execution to cancel
+    */
     function cancelExecution(uint256 _delayedScriptId) external auth(CANCEL_EXECUTION_ROLE) {
         _cancelExecution(_delayedScriptId);
     }
