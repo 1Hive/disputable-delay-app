@@ -1,7 +1,6 @@
 import 'core-js/stable'
 import 'regenerator-runtime/runtime'
 import Aragon, { events } from '@aragon/api'
-import delaySettings from './lib/delay-settings'
 
 const app = new Aragon()
 
@@ -19,28 +18,28 @@ async function createStore() {
       }
 
       try {
-      switch (event) {
-        case events.ACCOUNTS_TRIGGER:
-          return { ...nextState }
-        case events.SYNC_STATUS_SYNCING:
-          return { ...nextState, isSyncing: true }
-        case events.SYNC_STATUS_SYNCED:
-          return { ...nextState, isSyncing: false }
-        case 'ChangeExecutionDelay':
-          return { ...nextState, executionDelay: returnValues.executionDelay }
-        case 'DelayedScriptStored':
-          return newScript(nextState, returnValues)
-        case 'ExecutionPaused':
-          return updateScript(nextState, returnValues)
-        case 'ExecutionResumed':
-          return updateScript(nextState, returnValues)
-        case 'ExecutedScript':
-          return removeScript(nextState, returnValues)
-        case 'ExecutionCancelled':
-          return removeScript(nextState, returnValues)
-        default:
-          return state
-      }
+        switch (event) {
+          case events.ACCOUNTS_TRIGGER:
+            return { ...nextState }
+          case events.SYNC_STATUS_SYNCING:
+            return { ...nextState, isSyncing: true }
+          case events.SYNC_STATUS_SYNCED:
+            return { ...nextState, isSyncing: false }
+          case 'ChangeExecutionDelay':
+            return { ...nextState, executionDelay: returnValues.executionDelay }
+          case 'DelayedScriptStored':
+            return newScript(nextState, returnValues)
+          case 'ExecutionPaused':
+            return updateScript(nextState, returnValues)
+          case 'ExecutionResumed':
+            return updateScript(nextState, returnValues)
+          case 'ExecutedScript':
+            return removeScript(nextState, returnValues)
+          case 'ExecutionCancelled':
+            return removeScript(nextState, returnValues)
+          default:
+            return state
+        }
       } catch (err) {
         console.log(err)
       }
@@ -57,7 +56,7 @@ async function createStore() {
  *                     *
  ***********************/
 
-function initializeState(state, tokenContract) {
+function initializeState(state) {
   return async cachedState => {
     return {
       ...state,
@@ -74,10 +73,7 @@ async function newScript(state, { scriptId }) {
 
   return {
     ...state,
-    delayedScripts:
-      delayedScript.executionTime > 0
-        ? [...delayedScripts, delayedScript]
-        : delayedScripts,
+    delayedScripts: delayedScript.executionTime > 0 ? [...delayedScripts, delayedScript] : delayedScripts,
   }
 }
 
@@ -87,11 +83,7 @@ async function updateScript(state, { scriptId }) {
 
   return {
     ...state,
-    delayedScripts: [
-      ...delayedScripts.slice(0, index),
-      await getScript(scriptId),
-      ...delayedScripts.slice(index + 1),
-    ],
+    delayedScripts: [...delayedScripts.slice(0, index), await getScript(scriptId), ...delayedScripts.slice(index + 1)],
   }
 }
 
@@ -101,10 +93,7 @@ function removeScript(state, { scriptId }) {
 
   return {
     ...state,
-    delayedScripts: [
-      ...delayedScripts.slice(0, index),
-      ...delayedScripts.slice(index + 1),
-    ],
+    delayedScripts: [...delayedScripts.slice(0, index), ...delayedScripts.slice(index + 1)],
   }
 }
 
@@ -115,36 +104,38 @@ function removeScript(state, { scriptId }) {
  ***********************/
 
 async function getScript(scriptId) {
-  const { executionTime, evmCallScript, pausedAt } = await app
-    .call('delayedScripts', scriptId)
-    .toPromise()
-  
+  const { executionTime, pausedAt, evmCallScript } = await app.call('delayedScripts', scriptId).toPromise()
+
+  const path = await app.describeScript(evmCallScript).toPromise()
+  let description
+  try {
+    description = path
+      ? path
+          .map(step => {
+            const identifier = step.identifier ? ` (${step.identifier})` : ''
+            const app = step.name ? `${step.name}${identifier}` : `${step.to}`
+
+            return `${app}: ${step.description || 'No description'}`
+          })
+          .join('\n')
+      : ''
+  } catch (error) {
+    console.error('Error describing script', error)
+    description = 'Invalid script. The result cannot be executed.'
+  }
+
   return {
     id: scriptId,
     executionTime: marshallDate(executionTime),
-    evmCallScript,
+    executionDescription: description,
     pausedAt: marshallDate(pausedAt),
   }
 }
 
 async function getDelaySettings() {
-  return Promise.all(
-    delaySettings.map(([name, key, type = 'string']) =>
-      app
-        .call(name)
-        .toPromise()
-        .then(val => (type === 'time' ? marshallDate(val) : val))
-        .then(value => ({ [key]: value }))
-    )
-  )
-    .then(settings =>
-      settings.reduce((acc, setting) => ({ ...acc, ...setting }), {})
-    )
-    .catch(err => {
-      console.error('Failed to load lock settings', err)
-      // Return an empty object to try again later
-      return {}
-    })
+  const executionDelay = marshallDate(await app.call('executionDelay').toPromise())
+
+  return { executionDelay }
 }
 
 function marshallDate(date) {
