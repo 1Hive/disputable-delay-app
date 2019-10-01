@@ -9,7 +9,6 @@ import styled from 'styled-components'
 
 function App() {
   const { delayedScripts, panelState, isSyncing, actions } = useAppLogic()
-
   return (
     <Main>
       <SyncIndicator visible={isSyncing} />

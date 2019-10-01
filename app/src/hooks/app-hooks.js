@@ -46,7 +46,7 @@ export function useExecuteAction(onDone) {
 }
 
 export function useAppLogic() {
-  const { isSyncing, ready } = useAppState()
+  const { isSyncing } = useAppState()
 
   const delayedScripts = useScripts()
   const panelState = useSidePanel()
@@ -55,13 +55,13 @@ export function useAppLogic() {
     execute: useExecuteAction(panelState.requestClose),
     pause: useScriptAction(panelState.requestClose),
     resume: useScriptAction(panelState.requestClose),
-    cancel: useScriptAction(panelState.requestClose)
+    cancel: useScriptAction(panelState.requestClose),
   }
 
   return {
     delayedScripts,
     panelState,
-    isSyncing: isSyncing || !ready,
+    isSyncing,
     actions,
   }
 }

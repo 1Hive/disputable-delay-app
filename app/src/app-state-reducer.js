@@ -1,7 +1,5 @@
-import { hasLoadedDelaySettings } from './lib/delay-settings'
-
 function appStateReducer(state) {
-  const ready = hasLoadedDelaySettings(state)
+  const ready = state && state.executionDelay //has loaded settings
 
   if (!ready) {
     return { ...state, ready }
