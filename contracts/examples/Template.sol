@@ -90,7 +90,7 @@ contract Template is TemplateBase {
         MiniMeToken token = tokenFactory.createCloneToken(MiniMeToken(0), 0, "App token", 0, "APP", true);
         token.changeController(tokenManager);
 
-        delay.initialize(10);
+        delay.initialize(60);
         tokenManager.initialize(token, true, 0);
         voting.initialize(token, 50 * PCT, 20 * PCT, 1 days);
 

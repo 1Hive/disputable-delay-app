@@ -59,7 +59,7 @@ contract Delay is AragonApp, IForwarder {
     }
 
     /**
-    * @notice Store script `_evmCallScript` for delayed execution
+    * @notice Delays execution for `@transformTime(self.executionDelay(): uint)`
     * @param _evmCallScript The script that can be executed after a delay
     */
     function delayExecution(bytes _evmCallScript) external auth(DELAY_EXECUTION_ROLE) returns (uint256) {
@@ -75,7 +75,7 @@ contract Delay is AragonApp, IForwarder {
     }
 
     /**
-    * @notice Store script `_evmCallScript` for delayed execution
+    * @notice Delays execution for `@transformTime(self.executionDelay(): uint)`
     * @param _evmCallScript The script that can be executed after a delay
     */
     function forward(bytes _evmCallScript) public {
