@@ -48,6 +48,18 @@ contract TemplateBase is APMNamehash {
 
         return base;
     }
+
+    function installApp(Kernel dao, bytes32 appId) internal returns (address) {
+        address instance = address(dao.newAppInstance(appId, latestVersionAppBase(appId)));
+        emit InstalledApp(instance, appId);
+        return instance;
+    }
+
+    function installDefaultApp(Kernel dao, bytes32 appId) internal returns (address) {
+        address instance = address(dao.newAppInstance(appId, latestVersionAppBase(appId), new bytes(0), true));
+        emit InstalledApp(instance, appId);
+        return instance;
+    }
 }
 
 
@@ -57,6 +69,10 @@ contract Template is TemplateBase {
     uint64 constant PCT = 10 ** 16;
     address constant ANY_ENTITY = address(-1);
 
+    bytes32 internal DELAY_APP_ID = keccak256(abi.encodePacked(apmNamehash("open"), keccak256("delay")));
+    bytes32 internal TOKEN_MANAGER_APP_ID = apmNamehash("token-manager");
+    bytes32 internal VOTING_APP_ID = apmNamehash("voting");
+
     constructor(ENS ens) TemplateBase(DAOFactory(0), ens) public {
         tokenFactory = new MiniMeTokenFactory();
     }
@@ -65,15 +81,11 @@ contract Template is TemplateBase {
         Kernel dao = fac.newDAO(this);
         ACL acl = ACL(dao.acl());
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
-
         address root = msg.sender;
-        bytes32 appId = keccak256(abi.encodePacked(apmNamehash("open"), keccak256("delay")));
-        bytes32 votingAppId = apmNamehash("voting");
-        bytes32 tokenManagerAppId = apmNamehash("token-manager");
 
-        Delay delay = Delay(dao.newAppInstance(appId, latestVersionAppBase(appId)));
-        Voting voting = Voting(dao.newAppInstance(votingAppId, latestVersionAppBase(votingAppId)));
-        TokenManager tokenManager = TokenManager(dao.newAppInstance(tokenManagerAppId, latestVersionAppBase(tokenManagerAppId)));
+        Delay delay = Delay(installApp(dao, DELAY_APP_ID));
+        Voting voting = Voting(installApp(dao, VOTING_APP_ID));
+        TokenManager tokenManager = TokenManager(installApp(dao, TOKEN_MANAGER_APP_ID));
 
         MiniMeToken token = tokenFactory.createCloneToken(MiniMeToken(0), 0, "App token", 0, "APP", true);
         token.changeController(tokenManager);
@@ -85,11 +97,13 @@ contract Template is TemplateBase {
         acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
         tokenManager.mint(root, 1); // Give one token to root
 
-        acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), root);
-        acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
+        acl.createPermission(delay, voting, voting.CREATE_VOTES_ROLE(), root);
 
         acl.createPermission(root, delay, delay.SET_DELAY_ROLE(), root);
-        acl.createPermission(ANY_ENTITY, delay, delay.DELAY_EXECUTION_ROLE(), root);
+        acl.createPermission(tokenManager, delay, delay.DELAY_EXECUTION_ROLE(), root);
+        acl.createPermission(root, delay, delay.PAUSE_EXECUTION_ROLE(), root);
+        acl.createPermission(root, delay, delay.RESUME_EXECUTION_ROLE(), root);
+        acl.createPermission(root, delay, delay.CANCEL_EXECUTION_ROLE(), root);
 
         // Clean up permissions
         acl.grantPermission(root, dao, dao.APP_MANAGER_ROLE());
@@ -99,6 +113,10 @@ contract Template is TemplateBase {
         acl.grantPermission(root, acl, acl.CREATE_PERMISSIONS_ROLE());
         acl.revokePermission(this, acl, acl.CREATE_PERMISSIONS_ROLE());
         acl.setPermissionManager(root, acl, acl.CREATE_PERMISSIONS_ROLE());
+
+        acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
+        acl.revokePermission(this, tokenManager, tokenManager.MINT_ROLE());
+        acl.setPermissionManager(root, tokenManager, tokenManager.MINT_ROLE());
 
         emit DeployInstance(dao);
     }

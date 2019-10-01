@@ -2,11 +2,11 @@ pragma solidity ^0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/common/IForwarder.sol";
-import "@aragon/os/contracts/lib/math/SafeMath.sol";
+import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 
 
 contract Delay is AragonApp, IForwarder {
-    using SafeMath for uint256;
+    using SafeMath64 for uint64;
 
     bytes32 public constant SET_DELAY_ROLE = keccak256("SET_DELAY_ROLE");
     bytes32 public constant DELAY_EXECUTION_ROLE = keccak256("DELAY_EXECUTION_ROLE");
@@ -21,12 +21,12 @@ contract Delay is AragonApp, IForwarder {
     string private constant ERROR_CAN_NOT_FORWARD = "DELAY_CAN_NOT_FORWARD";
 
     struct DelayedScript {
-        uint256 executionTime;
+        uint64 executionTime;
+        uint64 pausedAt;
         bytes evmCallScript;
-        uint256 pausedAt;
     }
 
-    uint256 public executionDelay;
+    uint64 public executionDelay;
     uint256 public delayedScriptsNewIndex = 0;
     mapping(uint256 => DelayedScript) public delayedScripts;
 
@@ -45,7 +45,7 @@ contract Delay is AragonApp, IForwarder {
     * @notice Initialize the Delay app
     * @param _executionDelay The delay in seconds a user will have to wait before executing a script
     */
-    function initialize(uint256 _executionDelay) external onlyInit {
+    function initialize(uint64 _executionDelay) external onlyInit {
         initialized();
         executionDelay = _executionDelay;
     }
@@ -54,7 +54,7 @@ contract Delay is AragonApp, IForwarder {
     * @notice Set the execution delay to `_executionDelay`
     * @param _executionDelay The new execution delay
     */
-    function setExecutionDelay(uint256 _executionDelay) external auth(SET_DELAY_ROLE) {
+    function setExecutionDelay(uint64 _executionDelay) external auth(SET_DELAY_ROLE) {
         executionDelay = _executionDelay;
     }
 
@@ -83,24 +83,15 @@ contract Delay is AragonApp, IForwarder {
         _delayExecution(_evmCallScript);
     }
 
-    function _delayExecution(bytes _evmCallScript) internal returns (uint256) {
-        uint256 delayedScriptIndex = delayedScriptsNewIndex;
-        delayedScriptsNewIndex++;
-
-        delayedScripts[delayedScriptIndex] = DelayedScript(now.add(executionDelay) , _evmCallScript, 0);
-
-        emit DelayedScriptStored(delayedScriptIndex);
-
-        return delayedScriptIndex;
-    }
-
     /**
     * @notice Pause the script execution with ID `_delayedScriptId`
     * @param _delayedScriptId The ID of the script execution to pause
     */
     function pauseExecution(uint256 _delayedScriptId) external auth(PAUSE_EXECUTION_ROLE) {
         require(canPause(_delayedScriptId), ERROR_CAN_NOT_PAUSE);
-        _pauseExecution(_delayedScriptId);
+        delayedScripts[_delayedScriptId].pausedAt = getTimestamp64();
+
+        emit ExecutionPaused(_delayedScriptId);
     }
 
     /**
@@ -109,7 +100,13 @@ contract Delay is AragonApp, IForwarder {
     */
     function resumeExecution(uint256 _delayedScriptId) external auth(RESUME_EXECUTION_ROLE) {
         require(canResume(_delayedScriptId), ERROR_CAN_NOT_RESUME);
-        _resumeExecution(_delayedScriptId);
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+
+        uint64 timePaused = getTimestamp64().sub(delayedScript.pausedAt);
+        delayedScript.executionTime = delayedScript.executionTime.add(timePaused);
+        delayedScript.pausedAt = 0;
+
+        emit ExecutionResumed(_delayedScriptId);
     }
 
     /**
@@ -117,7 +114,9 @@ contract Delay is AragonApp, IForwarder {
     * @param _delayedScriptId The ID of the script execution to cancel
     */
     function cancelExecution(uint256 _delayedScriptId) external auth(CANCEL_EXECUTION_ROLE) {
-        _cancelExecution(_delayedScriptId);
+        delete delayedScripts[_delayedScriptId];
+
+        emit ExecutionCancelled(_delayedScriptId);
     }
 
     /**
@@ -126,7 +125,6 @@ contract Delay is AragonApp, IForwarder {
     */
     function execute(uint256 _delayedScriptId) external {
         require(canExecute(_delayedScriptId), ERROR_CAN_NOT_EXECUTE);
-
         runScript(delayedScripts[_delayedScriptId].evmCallScript, new bytes(0), new address[](0));
 
         delete delayedScripts[_delayedScriptId];
@@ -146,8 +144,8 @@ contract Delay is AragonApp, IForwarder {
     * @notice Return whether a script with ID #`_scriptId` can be executed
     * @param _scriptId The ID of the script to execute
     */
-    function canExecute(uint256 _scriptId) public scriptExists(_scriptId) returns (bool) {
-        bool withinExecutionWindow = now > delayedScripts[_scriptId].executionTime;
+    function canExecute(uint256 _scriptId) public view scriptExists(_scriptId) returns (bool) {
+        bool withinExecutionWindow = getTimestamp64() > delayedScripts[_scriptId].executionTime;
         bool isUnpaused = !_isExecutionPaused(_scriptId);
 
         return withinExecutionWindow && isUnpaused;
@@ -157,25 +155,15 @@ contract Delay is AragonApp, IForwarder {
         return delayedScripts[_scriptId].pausedAt != 0;
     }
 
-    function _pauseExecution(uint256 _scriptId) internal {
-        delayedScripts[_scriptId].pausedAt = now;
-        emit ExecutionPaused(_scriptId);
-    }
+    function _delayExecution(bytes _evmCallScript) internal returns (uint256) {
+        uint256 delayedScriptIndex = delayedScriptsNewIndex;
+        delayedScriptsNewIndex++;
 
-    function _resumeExecution(uint256 _scriptId) internal {
-        DelayedScript storage delayedScript = delayedScripts[_scriptId];
+        delayedScripts[delayedScriptIndex] = DelayedScript(getTimestamp64().add(executionDelay), 0, _evmCallScript);
 
-        uint256 timePaused = now.sub(delayedScript.pausedAt);
-        delayedScript.executionTime = delayedScript.executionTime.add(timePaused);
-        delayedScript.pausedAt = 0;
+        emit DelayedScriptStored(delayedScriptIndex);
 
-        emit ExecutionResumed(_scriptId);
-    }
-
-    function _cancelExecution(uint256 _scriptId) internal {
-        delete delayedScripts[_scriptId];
-
-        emit ExecutionCancelled(_scriptId);
+        return delayedScriptIndex;
     }
 
 }
