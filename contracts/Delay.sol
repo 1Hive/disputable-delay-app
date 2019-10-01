@@ -14,7 +14,6 @@ contract Delay is AragonApp, IForwarder {
     bytes32 public constant RESUME_EXECUTION_ROLE = keccak256("RESUME_EXECUTION_ROLE");
     bytes32 public constant CANCEL_EXECUTION_ROLE = keccak256("CANCEL_EXECUTION_ROLE");
 
-
     string private constant ERROR_NO_SCRIPT = "DELAY_NO_SCRIPT";
     string private constant ERROR_CAN_NOT_EXECUTE = "DELAY_CAN_NOT_EXECUTE";
     string private constant ERROR_CAN_NOT_PAUSE = "DELAY_CAN_NOT_PAUSE";
@@ -113,6 +112,10 @@ contract Delay is AragonApp, IForwarder {
         _resumeExecution(_delayedScriptId);
     }
 
+    /**
+    * @notice Cancel script execution with ID `_delayedScriptId`
+    * @param _delayedScriptId The ID of the script execution to cancel
+    */
     function cancelExecution(uint256 _delayedScriptId) external auth(CANCEL_EXECUTION_ROLE) {
         _cancelExecution(_delayedScriptId);
     }
@@ -140,16 +143,14 @@ contract Delay is AragonApp, IForwarder {
     }
 
     /**
-    * @notice Tells whether a script with ID #`_scriptId` can be executed or not
+    * @notice Return whether a script with ID #`_scriptId` can be executed
     * @param _scriptId The ID of the script to execute
     */
     function canExecute(uint256 _scriptId) public scriptExists(_scriptId) returns (bool) {
-
-        if (_isExecutionPaused(_scriptId))
-            return false;
-
         bool withinExecutionWindow = now > delayedScripts[_scriptId].executionTime;
-        return withinExecutionWindow;
+        bool isUnpaused = !_isExecutionPaused(_scriptId);
+
+        return withinExecutionWindow && isUnpaused;
     }
 
     function _isExecutionPaused(uint256 _scriptId) internal view returns (bool) {
