@@ -111,8 +111,8 @@ contract('Delay', ([rootAccount, ...accounts]) => {
             const actualExecutionCounter = await executionTarget.counter()
             const {
               executionTime: actualExecutionTime,
-              evmCallScript: actualCallScript,
               pausedAt: actualPausedAt,
+              evmCallScript: actualCallScript,
             } = await delay.delayedScripts(0)
             assert.equal(actualExecutionCounter, 1)
             assert.equal(actualExecutionTime, 0)
@@ -129,8 +129,8 @@ contract('Delay', ([rootAccount, ...accounts]) => {
           const expectedExecutionTime = timestamp + INITIAL_DELAY
           const {
             executionTime: actualExecutionTime,
-            evmCallScript: actualCallScript,
             pausedAt: actualPausedAt,
+            evmCallScript: actualCallScript,
           } = await delay.delayedScripts(0)
           const actualNewScriptIndex = await delay.delayedScriptsNewIndex()
 
@@ -209,8 +209,8 @@ contract('Delay', ([rootAccount, ...accounts]) => {
 
             const {
               executionTime: actualExecutionTime,
-              evmCallScript: actualCallScript,
               pausedAt: actualPausedAt,
+              evmCallScript: actualCallScript,
             } = await delay.delayedScripts(0)
 
             assert.equal(actualExecutionTime, 0)
@@ -231,8 +231,8 @@ contract('Delay', ([rootAccount, ...accounts]) => {
             const actualExecutionCounter = await executionTarget.counter()
             const {
               executionTime: actualExecutionTime,
-              evmCallScript: actualCallScript,
               pausedAt: actualPausedAt,
+              evmCallScript: actualCallScript,
             } = await delay.delayedScripts(0)
             assert.equal(actualExecutionCounter, 1)
             assert.equal(actualExecutionTime, 0)
