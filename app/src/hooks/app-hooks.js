@@ -8,7 +8,9 @@ function useScripts() {
   const { delayedScripts } = useAppState()
   const now = useNow()
 
-  const scriptStatus = (delayedScripts || []).map(script => canExecute(script.executionTime, now))
+  const scriptStatus = (delayedScripts || []).map(script =>
+    canExecute(script, now)
+  )
   const scriptStatusKey = scriptStatus.join('')
 
   return useMemo(
@@ -21,7 +23,7 @@ function useScripts() {
   )
 }
 
-export function useScriptAction(onDone, action) {
+export function useScriptAction(action, onDone) {
   const api = useApi()
 
   return useCallback(
@@ -33,15 +35,14 @@ export function useScriptAction(onDone, action) {
   )
 }
 
-export function useExecuteAction(onDone) {
+export function useExecuteAction() {
   const api = useApi()
 
   return useCallback(
     scriptId => {
       api.execute(scriptId).toPromise()
-      onDone()
     },
-    [api, onDone]
+    [api]
   )
 }
 
@@ -52,10 +53,10 @@ export function useAppLogic() {
   const panelState = useSidePanel()
 
   const actions = {
-    execute: useExecuteAction(panelState.requestClose),
-    pause: useScriptAction(panelState.requestClose),
-    resume: useScriptAction(panelState.requestClose),
-    cancel: useScriptAction(panelState.requestClose),
+    pause: useScriptAction('pause', panelState.requestClose),
+    resume: useScriptAction('resume', panelState.requestClose),
+    cancel: useScriptAction('cancel', panelState.requestClose),
+    execute: useExecuteAction(),
   }
 
   return {

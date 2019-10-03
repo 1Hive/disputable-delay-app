@@ -13,7 +13,9 @@ function App() {
     <Main>
       <SyncIndicator visible={isSyncing} />
       <Header primary={<Title text="Delay" />} />
-      {delayedScripts && delayedScripts.length > 0 ? <Delays scripts={delayedScripts} actions={actions}/> : null}
+      {delayedScripts && delayedScripts.length > 0 ? (
+        <Delays scripts={delayedScripts} actions={actions} />
+      ) : null}
 
       <SidePanel
         title="Withdraw"

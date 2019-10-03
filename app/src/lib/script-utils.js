@@ -1,4 +1,3 @@
-
-export function canExecute(executionTime, now) {
-  return executionTime <= now
+export function canExecute({ executionTime, pausedAt }, now) {
+  return executionTime <= now && !pausedAt
 }

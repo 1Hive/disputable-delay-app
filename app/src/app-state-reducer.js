@@ -7,6 +7,8 @@ function appStateReducer(state) {
 
   const { delayedScripts } = state
 
+  console.log('scripts in reducer', delayedScripts)
+
   return {
     ...state,
     ready,
@@ -14,7 +16,6 @@ function appStateReducer(state) {
       ? delayedScripts.map(script => ({
           ...script,
           executionTime: new Date(script.executionTime),
-          pausedAt: new Date(script.pausedAt),
         }))
       : [],
   }
