@@ -13,7 +13,7 @@ async function initialize() {
 async function createStore() {
   return app.store(
     (state, { event, returnValues }) => {
-      let nextState = {
+      const nextState = {
         ...state,
       }
 
@@ -73,27 +73,43 @@ async function newScript(state, { scriptId }) {
 
   return {
     ...state,
-    delayedScripts: delayedScript.executionTime > 0 ? [...delayedScripts, delayedScript] : delayedScripts,
+    delayedScripts: delayedScript.executionTime
+      ? [...delayedScripts, delayedScript]
+      : [...delayedScripts],
   }
 }
 
 async function updateScript(state, { scriptId }) {
   const { delayedScripts } = state
-  let index = delayedScripts.findIndex(script => script.id === scriptId)
+  const index = delayedScripts.findIndex(script => script.scriptId === scriptId)
+
+  const newDelayedScripts =
+    index >= 0
+      ? [
+          ...delayedScripts.slice(0, index),
+          await getScript(scriptId),
+          ...delayedScripts.slice(index + 1),
+        ]
+      : [...delayedScripts]
 
   return {
     ...state,
-    delayedScripts: [...delayedScripts.slice(0, index), await getScript(scriptId), ...delayedScripts.slice(index + 1)],
+    delayedScripts: newDelayedScripts,
   }
 }
 
 function removeScript(state, { scriptId }) {
   const { delayedScripts } = state
-  let index = delayedScripts.findIndex(script => script.id === scriptId)
+  const index = delayedScripts.findIndex(script => script.scriptId === scriptId)
+
+  const newDelayedScripts =
+    index >= 0
+      ? [...delayedScripts.slice(0, index), ...delayedScripts.slice(index + 1)]
+      : [...delayedScripts]
 
   return {
     ...state,
-    delayedScripts: [...delayedScripts.slice(0, index), ...delayedScripts.slice(index + 1)],
+    delayedScripts: newDelayedScripts,
   }
 }
 
@@ -104,7 +120,11 @@ function removeScript(state, { scriptId }) {
  ***********************/
 
 async function getScript(scriptId) {
-  const { executionTime, pausedAt, evmCallScript } = await app.call('delayedScripts', scriptId).toPromise()
+  const { executionTime, pausedAt, evmCallScript } = await app
+    .call('delayedScripts', scriptId)
+    .toPromise()
+
+  if (executionTime.toString() === '0') return {}
 
   const path = await app.describeScript(evmCallScript).toPromise()
   let description
@@ -125,7 +145,7 @@ async function getScript(scriptId) {
   }
 
   return {
-    id: scriptId,
+    scriptId,
     executionTime: marshallDate(executionTime),
     executionDescription: description,
     pausedAt: marshallDate(pausedAt),
@@ -133,7 +153,9 @@ async function getScript(scriptId) {
 }
 
 async function getDelaySettings() {
-  const executionDelay = marshallDate(await app.call('executionDelay').toPromise())
+  const executionDelay = marshallDate(
+    await app.call('executionDelay').toPromise()
+  )
 
   return { executionDelay }
 }
