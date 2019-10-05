@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { Card, Button, Countdown, CardLayout, textStyle, GU } from '@aragon/ui'
 
 import LocalLabelAppBadge from './/LocalIdentityBadge/LocalLabelAppBadge'
+import ScriptText from './ScriptText'
 
 function Delays({ scripts, actions }) {
   return (
@@ -62,7 +63,7 @@ function Delays({ scripts, actions }) {
                 `}
               >
                 <span css="font-weight: bold;">#{scriptId}:</span>{' '}
-                <span>{executionDescription}</span>
+                <ScriptText disabled text={executionDescription} />
               </div>
               <Options>
                 {canExecute ? (

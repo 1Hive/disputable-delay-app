@@ -7,11 +7,10 @@ import {
   useInstalledApps,
 } from '@aragon/api-react'
 
+import { EMPTY_ADDRESS } from '../web3-utils'
 import appStateReducer from '../app-state-reducer'
 import { canExecute } from '..//lib/script-utils'
 import { useNow, useSidePanel } from './utils-hooks'
-
-export const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 // Temporary fix to make sure executionTargets always returns an array, until
 // we find out the reason why it can sometimes be missing in the cached data.
