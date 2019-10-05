@@ -1,11 +1,12 @@
 import React from 'react'
 import styled from 'styled-components'
 import { useAragonApi, useAppState } from '@aragon/api-react'
-import { Main, Header, Button, SyncIndicator, SidePanel } from '@aragon/ui'
+import { Main, Header, Button, SyncIndicator, SidePanel, GU } from '@aragon/ui'
 
 import { IdentityProvider } from './identity-manager'
 import { AppLogicProvider, useAppLogic } from './hooks/app-logic'
 
+import NoScripts from './screens/NoScripts'
 import Delays from './components/Delays'
 import Title from './components/Title'
 
@@ -17,13 +18,25 @@ const App = React.memo(function App() {
   return (
     <React.Fragment>
       <SyncIndicator visible={isSyncing} />
-      <Header primary={<Title text="Delay" />} />
-      {delayedScripts && delayedScripts.length > 0 ? (
-        <Delays scripts={delayedScripts} actions={actions} />
-      ) : null}
-
+      {!delayedScripts.length && (
+        <div
+          css={`
+            height: calc(100vh - ${8 * GU}px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          `}
+        >
+          <NoScripts isSyncing={isSyncing} />
+        </div>
+      )}
+      {!!delayedScripts.length && (
+        <React.Fragment>
+          <Header primary={<Title text="Delay" />} />
+          <Delays scripts={delayedScripts} actions={actions} />
+        </React.Fragment>
+      )}
       <SidePanel
-        title="Withdraw"
         opened={panelState.visible}
         onClose={panelState.requestClose}
         onTransitionEnd={panelState.endTransition}
