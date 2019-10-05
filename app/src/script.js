@@ -126,9 +126,14 @@ async function getScript(scriptId) {
 
   if (executionTime.toString() === '0') return {}
 
-  const path = await app.describeScript(evmCallScript).toPromise()
-  let description
+  let description = ''
+  let executionTargets = []
+
   try {
+    const path = await app.describeScript(evmCallScript).toPromise()
+
+    executionTargets = [...new Set(path.map(({ to }) => to))]
+
     description = path
       ? path
           .map(step => {
@@ -148,6 +153,7 @@ async function getScript(scriptId) {
     scriptId,
     executionTime: marshallDate(executionTime),
     executionDescription: description,
+    executionTargets,
     pausedAt: marshallDate(pausedAt),
   }
 }
