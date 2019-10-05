@@ -100,7 +100,7 @@ contract Template is TemplateBase {
         acl.createPermission(delay, voting, voting.CREATE_VOTES_ROLE(), root);
 
         acl.createPermission(root, delay, delay.SET_DELAY_ROLE(), root);
-        acl.createPermission(tokenManager, delay, delay.DELAY_EXECUTION_ROLE(), root);
+        acl.createPermission(ANY_ENTITY, delay, delay.DELAY_EXECUTION_ROLE(), root);
         acl.createPermission(root, delay, delay.PAUSE_EXECUTION_ROLE(), root);
         acl.createPermission(root, delay, delay.RESUME_EXECUTION_ROLE(), root);
         acl.createPermission(root, delay, delay.CANCEL_EXECUTION_ROLE(), root);
