@@ -1,16 +1,21 @@
 import React from 'react'
+import styled from 'styled-components'
 import { useAragonApi, useAppState } from '@aragon/api-react'
 import { Main, Header, Button, SyncIndicator, SidePanel } from '@aragon/ui'
-import { useAppLogic } from './hooks/app-hooks'
+
+import { IdentityProvider } from './identity-manager'
+import { AppLogicProvider, useAppLogic } from './hooks/app-logic'
 
 import Delays from './components/Delays'
 import Title from './components/Title'
-import styled from 'styled-components'
 
-function App() {
+const App = React.memo(function App() {
   const { delayedScripts, panelState, isSyncing, actions } = useAppLogic()
+
+  // TODO: (Gabi) Add filter Scripts
+
   return (
-    <Main>
+    <React.Fragment>
       <SyncIndicator visible={isSyncing} />
       <Header primary={<Title text="Delay" />} />
       {delayedScripts && delayedScripts.length > 0 ? (
@@ -23,8 +28,20 @@ function App() {
         onClose={panelState.requestClose}
         onTransitionEnd={panelState.endTransition}
       />
+    </React.Fragment>
+  )
+})
+
+export default function Delay() {
+  return (
+    <Main assetsUrl="./aragon-ui">
+      <AppLogicProvider>
+        <IdentityProvider>
+          {/* <SettingsProvider> */}
+          <App />
+          {/* </SettingsProvider> */}
+        </IdentityProvider>
+      </AppLogicProvider>
     </Main>
   )
 }
-
-export default App
