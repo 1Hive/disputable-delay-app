@@ -1,6 +1,5 @@
-An application for Aragon.
+The delay app enables Aragon organizations to require a configurable delay between when an intent is sent and when it is executed.
 
-**Features**
-- Feature \#1.
-- Feature \#2.
-- Feature \#3.
+**WARNING**
+
+The code in this repo has not been audited.
