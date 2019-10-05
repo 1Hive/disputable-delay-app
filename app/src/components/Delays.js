@@ -1,11 +1,20 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Card, Button, Countdown, CardLayout, textStyle, GU } from '@aragon/ui'
+import {
+  Card,
+  Button,
+  Countdown,
+  CardLayout,
+  textStyle,
+  GU,
+  useTheme,
+} from '@aragon/ui'
 
 import LocalLabelAppBadge from './/LocalIdentityBadge/LocalLabelAppBadge'
 import ScriptText from './ScriptText'
 
 function Delays({ scripts, actions }) {
+  const { purple } = useTheme()
   return (
     <CardLayout columnWidthMin={30 * GU} rowHeight={294}>
       {scripts.map(
@@ -40,14 +49,13 @@ function Delays({ scripts, actions }) {
                 `}
               >
                 <LocalLabelAppBadge
-                  badgeOnly
                   appAddress={executionTargetData.address}
                   iconSrc={executionTargetData.iconSrc}
                   identifier={executionTargetData.identifier}
                   label={executionTargetData.name}
                 />
                 {!canExecute && !pausedAt && (
-                  <Countdown removeDaysAndHours={true} end={executionTime} />
+                  <Countdown removeDaysAndHours end={executionTime} />
                 )}
               </div>
               <div
@@ -63,12 +71,12 @@ function Delays({ scripts, actions }) {
                 `}
               >
                 <span css="font-weight: bold;">#{scriptId}:</span>{' '}
-                <ScriptText disabled text={executionDescription} />
+                <ScriptText disabled={false} text={executionDescription} />
               </div>
               <Options>
                 {canExecute ? (
                   <Button
-                    wide={true}
+                    wide
                     mode={'strong'}
                     onClick={() => actions.execute(scriptId)}
                   >
@@ -78,27 +86,28 @@ function Delays({ scripts, actions }) {
                   <>
                     {!pausedAt ? (
                       <DelayButton
-                        wide={true}
-                        css={{ marginRight: '10px' }}
+                        wide
+                        css={`
+                          marginright: '10px';
+                          color: white;
+                          background-color: #${purple.hexColor};
+                        `}
                         onClick={() => actions.pause(scriptId)}
                       >
                         Pause
                       </DelayButton>
                     ) : (
                       <DelayButton
-                        wide={true}
-                        css={{ marginRight: '10px' }}
+                        wide
+                        css={{ marginright: '10px' }}
+                        mode="positive"
                         onClick={() => actions.resume(scriptId)}
                       >
                         Resume
                       </DelayButton>
                     )}
 
-                    <DelayButton
-                      wide={true}
-                      mode="negative"
-                      onClick={() => actions.cancel(scriptId)}
-                    >
+                    <DelayButton wide onClick={() => actions.cancel(scriptId)}>
                       Cancel
                     </DelayButton>
                   </>
