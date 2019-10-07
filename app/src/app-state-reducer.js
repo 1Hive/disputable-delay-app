@@ -1,13 +1,13 @@
-import { hasLoadedDelaySettings } from './lib/delay-settings'
-
 function appStateReducer(state) {
-  const ready = hasLoadedDelaySettings(state)
+  const ready = state && state.executionDelay //has loaded settings
 
   if (!ready) {
     return { ...state, ready }
   }
 
   const { delayedScripts } = state
+
+  console.log('scripts in reducer', delayedScripts)
 
   return {
     ...state,
@@ -16,7 +16,6 @@ function appStateReducer(state) {
       ? delayedScripts.map(script => ({
           ...script,
           executionTime: new Date(script.executionTime),
-          pausedAt: new Date(script.pausedAt),
         }))
       : [],
   }
