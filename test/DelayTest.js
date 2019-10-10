@@ -1,17 +1,16 @@
 const Delay = artifacts.require('Delay')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
-import DaoDeployment from './helpers/DaoDeployment'
-import { deployedContract, assertRevert, timeTravel } from './helpers/helpers'
-import { encodeCallScript } from '@aragon/test-helpers/evmScript'
 
-contract('Delay', ([rootAccount, ...accounts]) => {
-  let daoDeployment = new DaoDeployment()
+const deployDAO = require('./helpers/deployDAO')
+const { deployedContract, assertRevert, timeTravel } = require('./helpers/helpers')
+const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
+const { hash: nameHash } = require('eth-ens-namehash')
+
+contract('Delay', ([rootAccount]) => {
   let delayBase, delay
   let SET_DELAY_ROLE, DELAY_EXECUTION_ROLE, PAUSE_EXECUTION_ROLE, RESUME_EXECUTION_ROLE, CANCEL_EXECUTION_ROLE
 
-  before(async () => {
-    await daoDeployment.deployBefore()
-
+  before('deploy base apps', async () => {
     delayBase = await Delay.new()
     SET_DELAY_ROLE = await delayBase.SET_DELAY_ROLE()
     DELAY_EXECUTION_ROLE = await delayBase.DELAY_EXECUTION_ROLE()
@@ -20,17 +19,26 @@ contract('Delay', ([rootAccount, ...accounts]) => {
     CANCEL_EXECUTION_ROLE = await delayBase.CANCEL_EXECUTION_ROLE()
   })
 
-  beforeEach(async () => {
-    await daoDeployment.deployBeforeEach(rootAccount)
-    const newAppReceipt = await daoDeployment.kernel.newAppInstance('0x1234', delayBase.address, '0x', false, {
-      from: rootAccount,
-    })
-    delay = await Delay.at(deployedContract(newAppReceipt))
+  beforeEach('deploy dao en delay', async () => {
+    const daoDeployment = await deployDAO(rootAccount)
+    dao = daoDeployment.dao
+    acl = daoDeployment.acl
 
-    await daoDeployment.acl.createPermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE, rootAccount)
-    await daoDeployment.acl.createPermission(rootAccount, delay.address, PAUSE_EXECUTION_ROLE, rootAccount)
-    await daoDeployment.acl.createPermission(rootAccount, delay.address, RESUME_EXECUTION_ROLE, rootAccount)
-    await daoDeployment.acl.createPermission(rootAccount, delay.address, CANCEL_EXECUTION_ROLE, rootAccount)
+    const newDelayAppReceipt = await dao.newAppInstance(
+      nameHash('delay.aragonpm.test'),
+      delayBase.address,
+      '0x',
+      false,
+      {
+        from: rootAccount,
+      }
+    )
+    delay = await Delay.at(deployedContract(newDelayAppReceipt))
+
+    await acl.createPermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE, rootAccount)
+    await acl.createPermission(rootAccount, delay.address, PAUSE_EXECUTION_ROLE, rootAccount)
+    await acl.createPermission(rootAccount, delay.address, RESUME_EXECUTION_ROLE, rootAccount)
+    await acl.createPermission(rootAccount, delay.address, CANCEL_EXECUTION_ROLE, rootAccount)
   })
 
   describe('initialize(uint256 _executionDelay)', () => {
@@ -53,7 +61,7 @@ contract('Delay', ([rootAccount, ...accounts]) => {
 
     describe('setExecutionDelay(uint256 _executionDelay)', () => {
       it('sets the execution delay correctly', async () => {
-        await daoDeployment.acl.createPermission(rootAccount, delay.address, SET_DELAY_ROLE, rootAccount)
+        await acl.createPermission(rootAccount, delay.address, SET_DELAY_ROLE, rootAccount)
         const expectedExecutionDelay = 20
 
         await delay.setExecutionDelay(expectedExecutionDelay)
@@ -69,7 +77,7 @@ contract('Delay', ([rootAccount, ...accounts]) => {
       })
 
       it('returns false when permission has been revoked', async () => {
-        await daoDeployment.acl.revokePermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE)
+        await acl.revokePermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE)
         assert.isFalse(await delay.canForward(rootAccount, '0x'))
       })
     })
@@ -141,7 +149,7 @@ contract('Delay', ([rootAccount, ...accounts]) => {
         })
 
         it('reverts when permission revoked', async () => {
-          await daoDeployment.acl.revokePermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE)
+          await acl.revokePermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE)
 
           const forwardReceipt = delay.forward(script)
 
