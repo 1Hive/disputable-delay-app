@@ -19,7 +19,7 @@ contract('Delay', ([rootAccount]) => {
     CANCEL_EXECUTION_ROLE = await delayBase.CANCEL_EXECUTION_ROLE()
   })
 
-  beforeEach('deploy dao en delay', async () => {
+  beforeEach('deploy dao and delay', async () => {
     const daoDeployment = await deployDAO(rootAccount)
     dao = daoDeployment.dao
     acl = daoDeployment.acl
