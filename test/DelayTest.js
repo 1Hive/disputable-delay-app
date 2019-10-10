@@ -9,6 +9,7 @@ const { hash: nameHash } = require('eth-ens-namehash')
 contract('Delay', ([rootAccount]) => {
   let delayBase, delay
   let SET_DELAY_ROLE, DELAY_EXECUTION_ROLE, PAUSE_EXECUTION_ROLE, RESUME_EXECUTION_ROLE, CANCEL_EXECUTION_ROLE
+  let dao, acl
 
   before('deploy base apps', async () => {
     delayBase = await Delay.new()
