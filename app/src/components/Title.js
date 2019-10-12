@@ -16,7 +16,7 @@ function Title({ text, after }) {
       >
         {text}
       </Label>
-      {/* {after} */}
+      {after}
     </Wrapper>
   )
 }

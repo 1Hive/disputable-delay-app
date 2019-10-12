@@ -3,7 +3,6 @@ import styled from 'styled-components'
 import { Card, CardLayout, textStyle, GU } from '@aragon/ui'
 
 import CardHeader from './CardHeader'
-import CustomProgressBar from './CustomProgressBar'
 import Options from './Options'
 import ScriptText from './ScriptText'
 

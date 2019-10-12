@@ -47,16 +47,16 @@ const Wrapper = styled.div`
   padding: ${GU}px 0px;
   ${({ cursor }) => cursor && 'cursor: pointer;'}
   & > div > div {
-    transition: transform 2s ease;
+    transition: transform 1s ease;
   }
 
   & > ${Timer} > time > span:first-child {
-    height: 14px;
-    width: 14px;
+    height: 16px;
+    width: 16px;
   }
 
   & > ${Timer} > time > span:nth-child(2) {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   &:hover > ${Timer} {

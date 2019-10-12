@@ -1,5 +1,6 @@
 import 'core-js/stable'
 import 'regenerator-runtime/runtime'
+import { formatTime } from './lib/math-utils'
 import Aragon, { events } from '@aragon/api'
 
 const app = new Aragon()
@@ -25,8 +26,8 @@ async function createStore() {
             return { ...nextState, isSyncing: true }
           case events.SYNC_STATUS_SYNCED:
             return { ...nextState, isSyncing: false }
-          case 'ChangeExecutionDelay':
-            return { ...nextState, executionDelay: returnValues.executionDelay }
+          case 'ExecutionDelaySet':
+            return newExecutionDelay(nextState, returnValues)
           case 'DelayedScriptStored':
             return newScript(nextState, returnValues, blockNumber)
           case 'ExecutionPaused':
@@ -45,7 +46,7 @@ async function createStore() {
       }
     },
     {
-      init: initializeState({}),
+      init: initializeState(),
     }
   )
 }
@@ -56,15 +57,24 @@ async function createStore() {
  *                     *
  ***********************/
 
-function initializeState(state) {
+function initializeState() {
   return async cachedState => {
+    const { executionDelay } = await getDelaySettings()
+
+    executionDelay && app.identify(`Delay ${formatTime(executionDelay)}`)
     return {
-      ...state,
-      ...(await getDelaySettings()),
+      ...cachedState,
+      executionDelay,
       isSyncing: true,
       delayedScripts: [],
     }
   }
+}
+
+async function newExecutionDelay(state, { executionDelay }) {
+  app.identify(`Delay ${formatTime(executionDelay)}`)
+
+  return { ...state, executionDelay }
 }
 
 async function newScript(state, { scriptId }, blockNumber) {
@@ -178,7 +188,7 @@ function mergeScripts(oldScript, newScript) {
 }
 
 async function getDelaySettings() {
-  const executionDelay = marshallDate(await app.call('executionDelay').toPromise())
+  const executionDelay = await app.call('executionDelay').toPromise()
 
   return { executionDelay }
 }

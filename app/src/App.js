@@ -1,5 +1,5 @@
 import React from 'react'
-import { Main, Header, SyncIndicator, GU } from '@aragon/ui'
+import { Main, Tag, Header, SyncIndicator, GU } from '@aragon/ui'
 
 import { IdentityProvider } from './identity-manager'
 import { AppLogicProvider, useAppLogic } from './hooks/app-logic'
@@ -9,7 +9,7 @@ import Delays from './components/Delays'
 import Title from './components/Title'
 
 const App = () => {
-  const { delayedScripts, isSyncing, actions } = useAppLogic()
+  const { delayedScripts, executionDelayFormatted, isSyncing, actions } = useAppLogic()
 
   // TODO: (Gabi) Add filter Scripts
 
@@ -30,7 +30,20 @@ const App = () => {
       )}
       {!!delayedScripts.length && (
         <React.Fragment>
-          <Header primary={<Title text="Delay" />} />
+          <Header
+            primary={
+              <Title
+                text="Delay"
+                after={
+                  executionDelayFormatted && (
+                    <Tag mode="identifier" uppercase={false}>
+                      {executionDelayFormatted}
+                    </Tag>
+                  )
+                }
+              />
+            }
+          />
           <Delays scripts={delayedScripts} actions={actions} />
         </React.Fragment>
       )}
