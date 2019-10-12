@@ -31,6 +31,7 @@ contract Delay is AragonApp, IForwarder {
     mapping(uint256 => DelayedScript) public delayedScripts;
 
     event DelayedScriptStored(uint256 scriptId);
+    event ExecutionDelaySet(uint64 executionDelay);
     event ExecutedScript(uint256 scriptId);
     event ExecutionPaused(uint256 scriptId);
     event ExecutionResumed(uint256 scriptId);
@@ -56,6 +57,8 @@ contract Delay is AragonApp, IForwarder {
     */
     function setExecutionDelay(uint64 _executionDelay) external auth(SET_DELAY_ROLE) {
         executionDelay = _executionDelay;
+
+        emit ExecutionDelaySet(executionDelay);
     }
 
     /**
