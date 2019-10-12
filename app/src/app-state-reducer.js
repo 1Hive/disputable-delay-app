@@ -7,8 +7,6 @@ function appStateReducer(state) {
 
   const { delayedScripts } = state
 
-  console.log('scripts in reducer', delayedScripts)
-
   return {
     ...state,
     ready,
