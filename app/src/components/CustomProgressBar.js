@@ -20,7 +20,7 @@ function CustomProgressBar({ start, endDate, pausedAt }) {
   }, [start, now, end]) // Notice how if script is paused, the value is going to be the memoized one (not re-computed)
 
   return (
-    <Wrapper showCursor={isActive}>
+    <Wrapper>
       <Timer>
         {isActive ? (
           <Countdown removeDaysAndHours={toHours(end - now) < 1} end={endDate} />
@@ -54,7 +54,7 @@ const Wrapper = styled.div`
   margin-left: ${GU * 3}px;
   position: relative;
   padding: ${GU}px 0px;
-  ${({ showCursor }) => showCursor && 'cursor: pointer;'}
+  cursor: pointer;
   & > div > div {
     transition: transform 1s ease;
   }
