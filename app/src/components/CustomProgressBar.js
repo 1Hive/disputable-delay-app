@@ -2,28 +2,29 @@ import React, { useMemo } from 'react'
 import styled from 'styled-components'
 
 import { Countdown, ProgressBar, GU, useTheme } from '@aragon/ui'
+import { useNow } from '../hooks/utils-hooks'
 import { round, toHours, formatTime } from '../lib/math-utils'
 
 function CustomProgressBar({ start, endDate, pausedAt }) {
+  const now = useNow()
   const theme = useTheme()
   const barColor = pausedAt ? theme.yellow : theme.accent
 
-  console.log(theme)
   const isActive = !pausedAt
 
-  // If script execution is paused set now to time paused
-  const now = !pausedAt ? Date.now() : pausedAt
+  // If script execution is paused set moment to time paused
+  const moment = !pausedAt ? now.getTime() : pausedAt
   const end = endDate.getTime() // Get milliseconds
 
   const value = useMemo(() => {
-    return round((now - start) / (end - start), 6)
-  }, [start, now, end]) // Notice how if script is paused, the value is going to be the memoized one (not re-computed)
+    return round((moment - start) / (end - start), 6)
+  }, [start, moment, end]) // Notice how if script is paused, the value is going to be the memoized one (not re-computed)
 
   return (
     <Wrapper>
       <Timer>
         {isActive ? (
-          <Countdown removeDaysAndHours={toHours(end - now) < 1} end={endDate} />
+          <Countdown removeDaysAndHours={toHours(end - moment) < 1} end={endDate} />
         ) : (
           <span
             css={`

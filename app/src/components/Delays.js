@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import { Card, CardLayout, textStyle, GU } from '@aragon/ui'
 
@@ -6,7 +6,16 @@ import CardHeader from './CardHeader'
 import Options from './Options'
 import ScriptText from './ScriptText'
 
-function Delays({ scripts, actions }) {
+const useScripts = scripts => {
+  const activeScripts = scripts.filter(s => !s.pausedAt)
+  const pausedScripts = scripts.filter(s => !activeScripts.includes(s))
+
+  return { activeScripts, pausedScripts }
+}
+
+const Delays = React.memo(({ scripts, onScriptAction }) => {
+  const { activeScripts, pausedScripts } = useScripts(scripts)
+
   return (
     <CardLayout columnWidthMin={30 * GU} rowHeight={294}>
       {scripts.map((script, index) => {
@@ -21,14 +30,14 @@ function Delays({ scripts, actions }) {
               scriptId={script.scriptId}
               canExecute={script.canExecute}
               pausedAt={script.pausedAt}
-              actions={actions}
+              onScriptAction={onScriptAction}
             />
           </CardItem>
         )
       })}
     </CardLayout>
   )
-}
+})
 
 const CardItem = styled(Card)`
   display: grid;

@@ -5,23 +5,14 @@ import { useScripts } from './scripts-hooks'
 import { formatTime } from '../lib/math-utils'
 import appStateReducer from '../app-state-reducer'
 
-function useScriptAction(action) {
+function useScriptAction() {
   const api = useApi()
+  const defaultAction = 'execute'
 
   return useCallback(
-    scriptId => {
-      api[`${action}Execution`](scriptId).toPromise()
-    },
-    [api]
-  )
-}
-
-function useExecuteAction() {
-  const api = useApi()
-
-  return useCallback(
-    scriptId => {
-      api.execute(scriptId).toPromise()
+    (scriptId, action = defaultAction) => {
+      const method = action !== defaultAction ? `${action}Execution` : action
+      api[method](scriptId).toPromise()
     },
     [api]
   )
@@ -36,18 +27,11 @@ export function useAppLogic() {
 
   const [delayedScripts, executionTargets] = useScripts()
 
-  const actions = {
-    pause: useScriptAction('pause'),
-    resume: useScriptAction('resume'),
-    cancel: useScriptAction('cancel'),
-    execute: useExecuteAction(),
-  }
-
   return {
     delayedScripts,
     executionTargets,
     executionDelayFormatted,
-    actions,
+    onScriptAction: useScriptAction(),
     isSyncing,
   }
 }

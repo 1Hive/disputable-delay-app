@@ -12,7 +12,7 @@ const getFirstActionProps = (action, theme) => {
       return { mode: 'positive', text: 'Resume', beforeIcon: ResumeIcon }
     case 'pause':
       return {
-        mode: '',
+        mode: 'normal',
         css: `color: white; background-color: ${theme.purple};`,
         text: 'Pause',
         beforeIcon: PauseIcon,
@@ -25,7 +25,7 @@ const getFirstActionProps = (action, theme) => {
   }
 }
 
-const Options = React.memo(({ scriptId, canExecute, pausedAt, actions }) => {
+const Options = React.memo(({ scriptId, canExecute, pausedAt, onScriptAction }) => {
   const theme = useTheme()
 
   const action = canExecute ? 'execute' : pausedAt ? 'resume' : 'pause'
@@ -33,8 +33,8 @@ const Options = React.memo(({ scriptId, canExecute, pausedAt, actions }) => {
 
   return (
     <Wrapper>
-      <DelayButton {...props} onClick={() => actions[action](scriptId)} />
-      <DelayButton text="Cancel" onClick={() => actions.cancel(scriptId)} />
+      <DelayButton {...props} onClick={() => onScriptAction(scriptId, action)} />
+      <DelayButton text="Cancel" onClick={() => onScriptAction(scriptId, 'cancel')} />
     </Wrapper>
   )
 })

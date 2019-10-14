@@ -8,8 +8,8 @@ import NoScripts from './screens/NoScripts'
 import Delays from './components/Delays'
 import Title from './components/Title'
 
-const App = () => {
-  const { delayedScripts, executionDelayFormatted, isSyncing, actions } = useAppLogic()
+const App = React.memo(() => {
+  const { delayedScripts, executionDelayFormatted, isSyncing, onScriptAction } = useAppLogic()
 
   // TODO: (Gabi) Add filter Scripts
 
@@ -44,12 +44,12 @@ const App = () => {
               />
             }
           />
-          <Delays scripts={delayedScripts} actions={actions} />
+          <Delays scripts={delayedScripts} onScriptAction={onScriptAction} />
         </React.Fragment>
       )}
     </React.Fragment>
   )
-}
+})
 
 export default function Delay() {
   return (

@@ -3,7 +3,7 @@ import styled from 'styled-components'
 
 import { Button, GU, textStyle } from '@aragon/ui'
 
-export default function DelayButton({ text, beforeIcon, css, ...props }) {
+function DelayButton({ text, beforeIcon, css, ...props }) {
   return (
     <CustomButton wide css={css} {...props}>
       {beforeIcon && (
@@ -28,3 +28,5 @@ const CustomButton = styled(Button)`
     margin-right: ${GU / 2}px;
   }
 `
+
+export default DelayButton
