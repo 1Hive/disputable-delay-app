@@ -11,6 +11,9 @@ const LocalLabelAppBadge = ({ appAddress, label, ...props }) => {
   const handleClick = () => showLocalLabelAppModal(appAddress)
   return (
     <AppBadge
+      css={`
+        width: 28px;
+      `}
       appAddress={appAddress}
       label={localLabel || label}
       networkType={network && network.type}
@@ -18,9 +21,7 @@ const LocalLabelAppBadge = ({ appAddress, label, ...props }) => {
         label: <LocalLabelPopoverActionLabel hasLabel={Boolean(localLabel)} />,
         onClick: handleClick,
       }}
-      popoverTitle={
-        localLabel ? <LocalLabelPopoverTitle label={localLabel} /> : undefined
-      }
+      popoverTitle={localLabel ? <LocalLabelPopoverTitle label={localLabel} /> : undefined}
       {...props}
     />
   )

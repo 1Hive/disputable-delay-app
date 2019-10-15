@@ -1,142 +1,63 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import styled from 'styled-components'
-import {
-  Card,
-  Button,
-  Countdown,
-  CardLayout,
-  textStyle,
-  GU,
-  useTheme,
-} from '@aragon/ui'
+import { Card, CardLayout, textStyle, GU } from '@aragon/ui'
 
-import LocalLabelAppBadge from './/LocalIdentityBadge/LocalLabelAppBadge'
+import CardHeader from './CardHeader'
+import Options from './Options'
 import ScriptText from './ScriptText'
 
-function Delays({ scripts, actions }) {
-  const { purple } = useTheme()
-  return (
-    <CardLayout columnWidthMin={30 * GU} rowHeight={294}>
-      {scripts.map(
-        (
-          {
-            scriptId,
-            executionTime,
-            executionDescription,
-            executionTargetData,
-            pausedAt,
-            canExecute,
-            ...script
-          },
-          index
-        ) => {
-          return (
-            <CardItem
-              key={index}
-              css={`
-                display: grid;
-                grid-template-columns: 100%;
-                grid-template-rows: auto 1fr auto auto;
-                grid-gap: ${1 * GU}px;
-                padding: ${3 * GU}px;
-              `}
-            >
-              <div
-                css={`
-                  display: flex;
-                  justify-content: space-between;
-                  margin-bottom: ${1 * GU}px;
-                `}
-              >
-                <LocalLabelAppBadge
-                  appAddress={executionTargetData.address}
-                  iconSrc={executionTargetData.iconSrc}
-                  identifier={executionTargetData.identifier}
-                  label={executionTargetData.name}
-                />
-                {!canExecute && !pausedAt && (
-                  <Countdown removeDaysAndHours end={executionTime} />
-                )}
-              </div>
-              <div
-                css={`
-                  ${textStyle('body1')};
-                  /* lines per font size per line height */
-                  /* shorter texts align to the top */
-                  height: 84px;
-                  display: -webkit-box;
-                  -webkit-box-orient: vertical;
-                  -webkit-line-clamp: 3;
-                  overflow: hidden;
-                `}
-              >
-                <span css="font-weight: bold;">#{scriptId}:</span>{' '}
-                <ScriptText disabled={false} text={executionDescription} />
-              </div>
-              <Options>
-                {canExecute ? (
-                  <Button
-                    wide
-                    mode={'strong'}
-                    onClick={() => actions.execute(scriptId)}
-                  >
-                    Execute
-                  </Button>
-                ) : (
-                  <>
-                    {!pausedAt ? (
-                      <DelayButton
-                        wide
-                        css={`
-                          marginright: '10px';
-                          color: white;
-                          background-color: #${purple.hexColor};
-                        `}
-                        onClick={() => actions.pause(scriptId)}
-                      >
-                        Pause
-                      </DelayButton>
-                    ) : (
-                      <DelayButton
-                        wide
-                        css={{ marginright: '10px' }}
-                        mode="positive"
-                        onClick={() => actions.resume(scriptId)}
-                      >
-                        Resume
-                      </DelayButton>
-                    )}
+const useScripts = scripts => {
+  const activeScripts = scripts.filter(s => !s.pausedAt)
+  const pausedScripts = scripts.filter(s => !activeScripts.includes(s))
 
-                    <DelayButton wide onClick={() => actions.cancel(scriptId)}>
-                      Cancel
-                    </DelayButton>
-                  </>
-                )}
-              </Options>
-            </CardItem>
-          )
-        }
-      )}
-    </CardLayout>
-  )
+  return { activeScripts, pausedScripts }
 }
 
+const Delays = React.memo(({ scripts, onScriptAction }) => {
+  const { activeScripts, pausedScripts } = useScripts(scripts)
+
+  return (
+    <CardLayout columnWidthMin={30 * GU} rowHeight={294}>
+      {scripts.map((script, index) => {
+        return (
+          <CardItem key={index}>
+            <CardHeader {...script} />
+            <Description>
+              <span css="font-weight: bold;">#{script.scriptId}:</span>{' '}
+              <ScriptText disabled={false} text={script.executionDescription} />
+            </Description>
+            <Options
+              scriptId={script.scriptId}
+              canExecute={script.canExecute}
+              pausedAt={script.pausedAt}
+              onScriptAction={onScriptAction}
+            />
+          </CardItem>
+        )
+      })}
+    </CardLayout>
+  )
+})
+
 const CardItem = styled(Card)`
-  padding: 16px;
+  display: grid;
+  grid-template-columns: 100%;
+  grid-template-rows: auto 1fr auto auto;
+  grid-gap: ${1 * GU}px;
+  padding: ${3 * GU}px;
+  box-shadow: rgba(51, 77, 117, 0.2) 0px 1px 3px;
+  border: 0;
 `
 
-const Options = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: space-around;
-`
-
-const DelayButton = styled(Button)`
-  ${textStyle('body2')};
-  width: 50%;
-  &:first-child {
-    margin-right: ${1 * GU}px;
-  }
+const Description = styled.div`
+  ${textStyle('body1')};
+  /* lines per font size per line height */
+  /* shorter texts align to the top */
+  height: 84px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 `
 
 export default Delays
