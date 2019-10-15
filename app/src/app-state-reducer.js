@@ -18,9 +18,9 @@ const compareScripts = (s1, s2) => {
   if (diff !== 0) return diff
 
   const timeRemainingS1 = s1.executionTime - s1.pausedAt
-  const timeRemainginS2 = s2.executionTime - s2.pausedAt
+  const timeRemainingS2 = s2.executionTime - s2.pausedAt
 
-  return timeRemainingS1 - timeRemainginS2
+  return timeRemainingS1 - timeRemainingS2
 }
 
 function appStateReducer(state) {
