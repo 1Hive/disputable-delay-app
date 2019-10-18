@@ -66,7 +66,6 @@ function initializeState() {
       ...cachedState,
       executionDelay,
       isSyncing: true,
-      delayedScripts: [],
     }
   }
 }
@@ -78,9 +77,9 @@ async function newExecutionDelay(state, { executionDelay }) {
 }
 
 async function newScript(state, { scriptId }, blockNumber) {
-  const { delayedScripts } = state
+  const { delayedScripts = [] } = state
 
-  const { timestamp } = await getBlockTimestamp(blockNumber) //TODO: Move to getScript (keep in mind that updateScript also calls this function)
+  const { timestamp } = await getBlock(blockNumber) // TODO: Move to getScript (keep in mind that updateScript also calls this function)
   const delayedScript = {
     ...(await getScript(scriptId, blockNumber)),
     timeSubmitted: marshallDate(timestamp),
@@ -89,7 +88,9 @@ async function newScript(state, { scriptId }, blockNumber) {
 
   return {
     ...state,
-    delayedScripts: delayedScript.executionTime ? [...delayedScripts, delayedScript] : [...delayedScripts],
+    delayedScripts: delayedScript.executionTime
+      ? [...delayedScripts, delayedScript]
+      : [...delayedScripts],
   }
 }
 
@@ -108,7 +109,11 @@ async function updateScript(state, { scriptId }) {
 
   return {
     ...state,
-    delayedScripts: [...delayedScripts.slice(0, index), updatedScript, ...delayedScripts.slice(index + 1)],
+    delayedScripts: [
+      ...delayedScripts.slice(0, index),
+      updatedScript,
+      ...delayedScripts.slice(index + 1),
+    ],
   }
 }
 
@@ -117,7 +122,9 @@ function removeScript(state, { scriptId }) {
   const index = delayedScripts.findIndex(script => script.scriptId === scriptId)
 
   const newDelayedScripts =
-    index >= 0 ? [...delayedScripts.slice(0, index), ...delayedScripts.slice(index + 1)] : [...delayedScripts]
+    index >= 0
+      ? [...delayedScripts.slice(0, index), ...delayedScripts.slice(index + 1)]
+      : [...delayedScripts]
 
   return {
     ...state,
@@ -132,7 +139,9 @@ function removeScript(state, { scriptId }) {
  ***********************/
 
 async function getScript(scriptId) {
-  const { executionTime, pausedAt, evmCallScript } = await app.call('delayedScripts', scriptId).toPromise()
+  const { executionTime, pausedAt, evmCallScript } = await app
+    .call('delayedScripts', scriptId)
+    .toPromise()
 
   if (executionTime === '0') return {}
 
@@ -172,12 +181,13 @@ async function getScript(scriptId) {
  * @dev function to maintain script time submited and total time paused
  * @param {*} oldScript script before the new event
  * @param {*} newScript script after the new event
+ * @returns {object} merged script
  */
 function mergeScripts(oldScript, newScript) {
-  //We need to keep the time the script was submitted and the total time it was paused for progress bar
+  // We need to keep the time the script was submitted and the total time it was paused for progress bar
   const { timeSubmitted, totalTimePaused, executionTime: oldExecutionTime } = oldScript || {}
 
-  //If resumed => timePaused > 0 else timePaused = 0
+  // If resumed => timePaused > 0 else timePaused = 0
   const timePaused = newScript.executionTime - oldExecutionTime
 
   return {
@@ -193,7 +203,7 @@ async function getDelaySettings() {
   return { executionDelay }
 }
 
-function getBlockTimestamp(blockNumber) {
+function getBlock(blockNumber) {
   return app.web3Eth('getBlock', blockNumber).toPromise()
 }
 
