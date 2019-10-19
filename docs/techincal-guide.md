@@ -30,7 +30,7 @@ These contracts have been audited by 3rd parties. Information on past Aragon aud
 
 ## Roles and Permissions
 
-The ABC app has the following roles:
+The Delay app has the following roles:
 ```
 bytes32 public constant SET_DELAY_ROLE = keccak256("SET_DELAY_ROLE");
 bytes32 public constant DELAY_EXECUTION_ROLE = keccak256("DELAY_EXECUTION_ROLE");
