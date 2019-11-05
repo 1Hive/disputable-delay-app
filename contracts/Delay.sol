@@ -73,25 +73,12 @@ contract Delay is AragonApp, IForwarder {
         return true;
     }
 
-    function canForward(address _sender, bytes) public view returns (bool) {
-        return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
-    }
-
-    /**
-    * @notice Delays execution for `@transformTime(self.executionDelay(): uint)`
-    * @param _evmCallScript The script that can be executed after a delay
-    */
-    function forward(bytes _evmCallScript) public {
-        require(canForward(msg.sender, _evmCallScript), ERROR_CAN_NOT_FORWARD);
-        _delayExecution(_evmCallScript);
-    }
-
     /**
     * @notice Pause the script execution with ID `_delayedScriptId`
     * @param _delayedScriptId The ID of the script execution to pause
     */
     function pauseExecution(uint256 _delayedScriptId) external auth(PAUSE_EXECUTION_ROLE) {
-        require(canPause(_delayedScriptId), ERROR_CAN_NOT_PAUSE);
+        require(!_isExecutionPaused(_delayedScriptId), ERROR_CAN_NOT_PAUSE);
         delayedScripts[_delayedScriptId].pausedAt = getTimestamp64();
 
         emit ExecutionPaused(_delayedScriptId);
@@ -102,7 +89,7 @@ contract Delay is AragonApp, IForwarder {
     * @param _delayedScriptId The ID of the script execution to resume
     */
     function resumeExecution(uint256 _delayedScriptId) external auth(RESUME_EXECUTION_ROLE) {
-        require(canResume(_delayedScriptId), ERROR_CAN_NOT_RESUME);
+        require(_isExecutionPaused(_delayedScriptId), ERROR_CAN_NOT_RESUME);
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
 
         uint64 timePaused = getTimestamp64().sub(delayedScript.pausedAt);
@@ -135,26 +122,31 @@ contract Delay is AragonApp, IForwarder {
         emit ExecutedScript(_delayedScriptId);
     }
 
-    function canPause(uint256 _scriptId) public view scriptExists(_scriptId) returns (bool) {
-        return !_isExecutionPaused(_scriptId);
-    }
-
-    function canResume(uint256 _scriptId) public view scriptExists(_scriptId) returns (bool) {
-        return _isExecutionPaused(_scriptId);
-    }
-
     /**
     * @notice Return whether a script with ID #`_scriptId` can be executed
     * @param _scriptId The ID of the script to execute
     */
-    function canExecute(uint256 _scriptId) public view scriptExists(_scriptId) returns (bool) {
+    function canExecute(uint256 _scriptId) public view returns (bool) {
         bool withinExecutionWindow = getTimestamp64() > delayedScripts[_scriptId].executionTime;
         bool isUnpaused = !_isExecutionPaused(_scriptId);
 
         return withinExecutionWindow && isUnpaused;
     }
 
-    function _isExecutionPaused(uint256 _scriptId) internal view returns (bool) {
+    function canForward(address _sender, bytes) public view returns (bool) {
+        return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
+    }
+
+    /**
+    * @notice Delays execution for `@transformTime(self.executionDelay(): uint)`
+    * @param _evmCallScript The script that can be executed after a delay
+    */
+    function forward(bytes _evmCallScript) public {
+        require(canForward(msg.sender, _evmCallScript), ERROR_CAN_NOT_FORWARD);
+        _delayExecution(_evmCallScript);
+    }
+
+    function _isExecutionPaused(uint256 _scriptId) internal view scriptExists(_scriptId) returns (bool) {
         return delayedScripts[_scriptId].pausedAt != 0;
     }
 
