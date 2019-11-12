@@ -101,7 +101,7 @@ event ExecutionCancelled(uint256 scriptId);
 
 ## Modifiers
 
-The `scriptExists` modifier checks that a live (pending future execution) delayedScript struct exists
+The `scriptExists` modifier checks that a live (pending future execution) `delayedScript` struct exists.
 ```
 modifier scriptExists(uint256 _scriptId) {
 	require(delayedScripts[_scriptId].executionTime != 0, ERROR_NO_SCRIPT);
