@@ -7,7 +7,7 @@
 
 #### 🐲 Project stage: development
 
-The X app is still in development. If you are interested in contributing please see our open [issues](https://github.com/1hive/x-app/issues).
+The Delay app is still in development. If you are interested in contributing please see our open [issues](https://github.com/1hive/x-app/issues).
 
 #### 🚨 Security review status: pre-audit
 
@@ -15,24 +15,26 @@ The code in this repo has not been audited.
 
 ## How does it work?
 
-[Insert detailed description here]
+The Delay app keeps track of the time left until the script can be forwarded, the script to forward, and the time that the script was paused at.
 
 ### Initialization
-
-The X app is initialized with `param1`, `param2`, and `param3` parameters. `param1` does A. `param2` does B. `param3` does C.
+The Delay app is initialized with the `_executionDealy` parameter. This defines the default length that a user will have to wait to execute a delayed script, provided it is not paused at some point during the delay.
 
 ### Roles
 
-The X app should implement the following roles:
-- **ROLE_1**: This allows for [insert role functionality here].
-- **ROLE_2**: This allows for [insert role functionality here].
-- **ROLE_3**: This allows for [insert role functionality here].
+The Delay app should implement the following roles:
+- `SET_DELAY_ROLE`: This allows for [insert role functionality here].
+- `DELAY_EXECUTION_ROLE`: This allows for [insert role functionality here].
+- `PAUSE_EXECUTION_ROLE`: This allows for [insert role functionality here].
+- `RESUME_EXECUTION_ROLE`: This allows for [insert role functionality here].
+- `CANCEL_EXECUTION_ROLE`: This allows for [insert role functionality here].
+
 
 ### Interface
 
 [explain the interface]
 
-## How to run Time Lock app locally
+## How to run the Delay app locally
 
 First make sure that you have node, npm, and the aragonCLI installed and working. Instructions on how to set that up can be found [here](https://hack.aragon.org/docs/cli-intro.html). You'll also need to have [Metamask](https://metamask.io) or some kind of web wallet enabled to sign transactions in the browser.
 
@@ -67,10 +69,10 @@ If everything is working correctly, your new DAO will be deployed and your brows
 You will also see the configuration for your local deployment in the terminal. It should look something like this:
 
 ```sh
-    Ethereum Node: ws://localhost:8545
-    ENS registry: 0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1
-    APM registry: aragonpm.eth
-    DAO address: YOUR-DAO-ADDRESS
+Ethereum Node: ws://localhost:8545
+ENS registry: 0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1
+APM registry: aragonpm.eth
+DAO address: YOUR-DAO-ADDRESS
 ```
 
 ### Template
@@ -93,6 +95,6 @@ aragon dao install <dao-address> x.open.aragonpm.eth --app-init-args <thing1> <t
 
 We welcome community contributions!
 
-Please check out our [open Issues](https://github.com/1Hive/x-app/issues) to get started.
+Please check out our [open Issues](https://github.com/1Hive/delay-app/issues) to get started.
 
 If you discover something that could potentially impact security, please notify us immediately. The quickest way to reach us is via the #dev channel in our [team Keybase chat](https://1hive.org/contribute/keybase). Just say hi and that you discovered a potential security vulnerability and we'll DM you to discuss details.
