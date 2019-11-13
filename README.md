@@ -23,63 +23,23 @@ The Delay app is initialized with the `_executionDealy` parameter. This defines 
 ### Roles
 
 The Delay app should implement the following roles:
-- `SET_DELAY_ROLE`: This allows for [insert role functionality here].
-- `DELAY_EXECUTION_ROLE`: This allows for [insert role functionality here].
-- `PAUSE_EXECUTION_ROLE`: This allows for [insert role functionality here].
-- `RESUME_EXECUTION_ROLE`: This allows for [insert role functionality here].
-- `CANCEL_EXECUTION_ROLE`: This allows for [insert role functionality here].
-
+- `SET_DELAY_ROLE`: This allows for setting a delay.
+- `DELAY_EXECUTION_ROLE`: This allows for executing a delay once it is past it's delay window.
+- `PAUSE_EXECUTION_ROLE`: This allows for pausing a delay.
+- `RESUME_EXECUTION_ROLE`: This allows for resuming a paused delay.
+- `CANCEL_EXECUTION_ROLE`: This allows for cancelling a delay.
 
 ### Interface
 
-[explain the interface]
+The Delay app does not have a user interface.
 
 ## How to run the Delay app locally
 
-First make sure that you have node, npm, and the aragonCLI installed and working. Instructions on how to set that up can be found [here](https://hack.aragon.org/docs/cli-intro.html). You'll also need to have [Metamask](https://metamask.io) or some kind of web wallet enabled to sign transactions in the browser.
-
-Git clone this repo.
-
-```sh
-git clone https://github.com/1Hive/x-app.git
-```
-
-Navigate into the `x-app` directory.
-
-```sh
-cd x-app
-```
-
-Install npm dependencies.
-
-```sh
-npm i
-```
-
-Deploy a dao with Time Lock app installed on your local environment.
-
-```sh
-npm run start:template
-```
-
-If everything is working correctly, your new DAO will be deployed and your browser will open http://localhost:3000/#/YOUR-DAO-ADDRESS. It should look something like this:
-
-![Newly deploy DAO with x app]([insert example picture here])
-
-You will also see the configuration for your local deployment in the terminal. It should look something like this:
-
-```sh
-Ethereum Node: ws://localhost:8545
-ENS registry: 0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1
-APM registry: aragonpm.eth
-DAO address: YOUR-DAO-ADDRESS
-```
+The Delay app is used in tandem with other Aragon apps, but you cannot deploy it on it's own.
 
 ### Template
 
-The X app is initialized with [explain template initialization here].
-
-[explain how-to use and interact with the template here]
+If you would like to see the Delay App in action, we recommend the Dandelion Org template available in the Aragon templates directory. Just go to https://preview.1hive.org/, then create a new organization, and choose Dandelion from the template options.
 
 ## Aragon DAO Installation
 
