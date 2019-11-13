@@ -67,11 +67,10 @@ Next, copy the proxy address of the permissionless app and create another enviro
 
 ---
 
-Three permissions need to be created for the AppX to function properly
-
-- `REDEEM_ROLE`
-- `ADD_TOKEN_ROLE`
-- `REMOVE_TOKEN_ROLE`
+The following permissions need to be created for the AppX to function properly:
+-
+-
+-
 
 After setting one of these roles the AppX will appear in the UI
 
