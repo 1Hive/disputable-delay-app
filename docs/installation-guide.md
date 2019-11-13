@@ -6,7 +6,7 @@ This guide will walk you through everything you need to add AppX to an existing 
 
 ## TL;DR
 
-AppX has been published to the following locaionts:
+AppX has been published to the following locations:
 - [Local]()
 - [Rinkeby]()
 - [Mainnet]()
