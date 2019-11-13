@@ -167,7 +167,7 @@ function forward(bytes _evmCallScript) public {
 
 ### setExecutionDelay
 
-This sets the global `_executionDelay` variable that was set at initialization.
+This sets the global `executionDelay` variable that was set at initialization.
 
 Only addresses that have been given the `SET_DELAY_ROLE` are allowed to call this function.
 ```
