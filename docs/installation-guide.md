@@ -1,6 +1,6 @@
 # AppX Installation Guide
 
-This guide will walk you though everything you need to add AppX to an existing Aragon DAO.
+This guide will walk you through everything you need to add AppX to an existing Aragon DAO.
 
 ---
 
