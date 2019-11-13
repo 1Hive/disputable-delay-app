@@ -41,12 +41,12 @@ bytes32 public constant CANCEL_EXECUTION_ROLE = keccak256("CANCEL_EXECUTION_ROLE
 
 These roles can be set to another Aragon app or an individual address.
 
-We recommend setting the following roles to the following apps or individuals:
-- `SET_DELAY_ROLE` => TBD
-- `DELAY_EXECUTION_ROLE` => TBD
-- `PAUSE_EXECUTION_ROLE` => TBD
-- `RESUME_EXECUTION_ROLE` => TBD
-- `CANCEL_EXECUTION_ROLE` => TBD
+We recommend setting the following roles to the following apps or externally owned accounts:
+- `SET_DELAY_ROLE` => Voting
+- `DELAY_EXECUTION_ROLE` => Voting
+- `PAUSE_EXECUTION_ROLE` => TokenManager || EOA
+- `RESUME_EXECUTION_ROLE` => TokenManager || EOA
+- `CANCEL_EXECUTION_ROLE` => TokenManager || EOA
 
 <br />
 
@@ -73,7 +73,7 @@ The following variables are globally scoped within the Delay app.
 ```
 // the default amount of time that the forwarding of an intent will be delayed
 uint256 public executionDelay;
-// the default index for a delayedScript struct
+// the index of the next created delayedScript struct
 uint256 public delayedScriptsNewIndex = 0;
 // a mapping of uint256 to an instance of a DelayedScript struct
 mapping(uint256 => DelayedScript) public delayedScripts;
@@ -140,7 +140,7 @@ function isForwarder() external pure returns (bool) {
 
 ### canForward
 
-This grants an address the ability to create create delayed forwarding intents via the Delay app.
+This checks if the `_sender` can create delayed forwarding intents via the Delay app.
 ```
 function canForward(address _sender, bytes) public view returns (bool) {
 	return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
@@ -169,7 +169,7 @@ function forward(bytes _evmCallScript) public {
 
 This sets the global `executionDelay` variable that was set at initialization.
 
-Only addresses that have been given the `SET_DELAY_ROLE` are allowed to call this function.
+Only addresses that have been given the `SET_DELAY_ROLE` are allowed to set the execution delay.
 ```
 /**
 * @notice Set the execution delay to `_executionDelay`
@@ -225,7 +225,7 @@ function execute(uint256 _delayedScriptId) external {
 
 ### delayExecution
 
-This is a wrapper for the `_delayExecution` function. This allows external accounts to call that function, but only if they have the `DELAY_EXECUTOIN_ROLE`. This is intended to be used so that other Aragon apps can created delayed forwarding intents.
+This is a wrapper for the `_delayExecution` function. This allows external accounts to forward an intent to delay the execution of a script, but only if they have the `DELAY_EXECUTOIN_ROLE`. This is intended to be used so that other Aragon apps can create delayed forwarding intents.
 ```
 /**
 * @notice Store script `_evmCallScript` for delayed execution
@@ -239,8 +239,8 @@ function delayExecution(bytes _evmCallScript) external auth(DELAY_EXECUTION_ROLE
 ### _delayExecution
 
 This is an internal function that is only meant to be called via a wrapper function. These include:
-- `delayExecution()` for external contracts (intended for Aragon apps)
-- `forward()` for public accounts that have the `DELAY_EXECUTION_ROLE`
+- `delayExecution()` for public accounts that have the `DELAY_EXECUTION_ROLE`
+- `forward()` for external contracts (intended for Aragon apps)
 
 This function delays an `_evmCallScript`. It does this by incrementing the `delayedScriptIndex`, then creating a `delayedScript` struct, then adding the `delayedScript` to the array of `delayedScripts` and mapping it to the newly incremented `delayedScriptIndex`. It then emits an event stating the index of the delayed script that was stored. Then it returns the `delayedScriptIndex` because [insert reason here].
 ```
