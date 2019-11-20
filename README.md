@@ -3,26 +3,24 @@
 [![CircleCI](https://circleci.com/gh/1Hive/delay-app.svg?style=svg)](https://circleci.com/gh/1Hive/delay-app)
 [![Coverage Status](https://coveralls.io/repos/github/1Hive/delay-app/badge.svg?branch=master&service=github)](https://coveralls.io/github/1Hive/delay-app?branch=master&service=github)
 
-1Hive's delay app enables Aragon organizations to require a configurable delay between when an intent is sent and when it is executed.
+The delay app enables Aragon organizations to require a configurable delay between when an intent is sent and when it is executed.
 
-#### 🐲 Project stage: development
-
-The Delay app is still in development. If you are interested in contributing please see our open [issues](https://github.com/1hive/x-app/issues).
-
-#### 🚨 Security review status: pre-audit
+#### 🚨 Security Review Status: Contracts frozen for audit as of commit [0edebf7b07bd44ad00e3ab61ac5c750d440278be](https://github.com/1Hive/delay-app/tree/0edebf7b07bd44ad00e3ab61ac5c750d440278be/contracts)
 
 The code in this repo has not been audited.
 
 ## How does it work?
 
-The Delay app keeps track of the time left until the script can be forwarded, the script to forward, and the time that the script was paused at.
+The Delay app keeps track of the time left until scripts can be executed, the script to execute, and the time that the script was paused at.
 
 ### Initialization
+
 The Delay app is initialized with the `_executionDealy` parameter. This defines the default length that a user will have to wait to execute a delayed script, provided it is not paused at some point during the delay.
 
 ### Roles
 
 The Delay app should implement the following roles:
+
 - `SET_DELAY_ROLE`: This allows for setting a delay.
 - `DELAY_EXECUTION_ROLE`: This allows for executing a delay once it is past it's delay window.
 - `PAUSE_EXECUTION_ROLE`: This allows for pausing a delay.
@@ -33,22 +31,46 @@ The Delay app should implement the following roles:
 
 The Delay app does not have a user interface.
 
-## How to run the Delay app locally
-
-The Delay app is used in tandem with other Aragon apps, but you cannot deploy it on it's own.
+## How to try Delay app immediately
 
 ### Template
 
 If you would like to see the Delay App in action, we recommend the Dandelion Org template available in the Aragon templates directory. Just go to https://preview.1hive.org/, then create a new organization, and choose Dandelion from the template options.
 
+## How to run the Delay app locally
+
+Git clone this repo.
+
+```sh
+git clone https://github.com/1Hive/delay-app.git
+```
+
+Navigate into the `delay-app` directory.
+
+```sh
+cd delay-app
+```
+
+Install npm dependencies.
+
+```sh
+npm i
+```
+
+Deploy a dao with Delay app installed on your local environment.
+
+```sh
+npm run start:template
+```
+
 ## Aragon DAO Installation
 
-[list Rinkeby or Mainnet APM deployment here]
+For a detailed step by step guide you can see [our installation guide](./docs/installation-guide.md)
 
 To deploy to an organization you can use the [aragonCLI](https://hack.aragon.org/docs/cli-intro.html).
 
 ```sh
-aragon dao install <dao-address> x.open.aragonpm.eth --app-init-args <thing1> <thing2> <thing3>
+aragon dao install <dao-address> delay.open.aragonpm.eth --app-init-args <delay-execution>
 ```
 
 ## Contributing
