@@ -14,8 +14,8 @@ There are 4 main actions a user can take relative to a script:
 
 - Pause a delayed script
 - Resume a delayed script
-- Cancel a delayed script
 - Execute a delayed script
+- Cancel a delayed script
 
 ### Creating a delayed action
 
@@ -37,14 +37,14 @@ In this example we have set up the DAO so the voting app can create delayed acti
     <img src="./resources/resume-script.gif" width="600" />
 </p>
 
-### Cancel a delayed action
-
-<p align="center">
-    <img src="./resources/cancel-script.gif" width="600" />
-</p>
-
 ### Execute a delayed action
 
 <p align="center">
     <img src="./resources/execute-script.gif" width="600" />
+</p>
+
+### Cancel a delayed action
+
+<p align="center">
+    <img src="./resources/cancel-script.gif" width="600" />
 </p>
