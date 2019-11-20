@@ -15,7 +15,7 @@ The Delay app keeps track of the time left until scripts can be executed, the sc
 
 ### Initialization
 
-The Delay app is initialized with the `_executionDealy` parameter. This defines the default length that a user will have to wait to execute a delayed script, provided it is not paused at some point during the delay.
+The Delay app is initialized with the `_executionDelay` parameter. This defines the default length that a user will have to wait to execute a delayed script, provided it is not paused at some point during the delay.
 
 ### Roles
 
@@ -29,7 +29,7 @@ The Delay app should implement the following roles:
 
 ### Interface
 
-The Delay app does not have a user interface.
+Check out our [user guide](./docs/user-guide.md) to go through the functionality of the app.
 
 ## How to try Delay app immediately
 
