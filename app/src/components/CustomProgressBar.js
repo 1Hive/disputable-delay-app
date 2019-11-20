@@ -45,8 +45,8 @@ export default CustomProgressBar
 const Timer = styled.div`
   position: absolute;
   right: 0;
-  top: 8px;
-  opacity: 0;
+  top: 18px;
+  opacity: 1;
   transition: opacity 0.3s ease, transform 0.4s ease;
 `
 
@@ -67,10 +67,5 @@ const Wrapper = styled.div`
 
   & > ${Timer} > time > span:nth-child(2) {
     font-size: 14px;
-  }
-
-  &:hover > ${Timer} {
-    opacity: 1;
-    transform: translateY(11px);
   }
 `
