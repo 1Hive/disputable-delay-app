@@ -5,6 +5,8 @@ import { Countdown, ProgressBar, GU, useTheme } from '@aragon/ui'
 import { useNow } from '../hooks/utils-hooks'
 import { round, toHours, formatTime } from '../lib/math-utils'
 
+const ONE_SECOND = 1000
+
 function CustomProgressBar({ start, endDate, pausedAt }) {
   const now = useNow()
   const theme = useTheme()
@@ -31,7 +33,7 @@ function CustomProgressBar({ start, endDate, pausedAt }) {
               font-size: 13px;
               color: ${String(theme.contentSecondary)};
             `}
-          >{`${formatTime((end - pausedAt) / 1000)} remaining`}</span>
+          >{`${formatTime((end - pausedAt - ONE_SECOND) / ONE_SECOND)} remaining`}</span>
         )}
       </Timer>
 
