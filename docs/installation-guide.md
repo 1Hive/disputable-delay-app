@@ -2,8 +2,6 @@
 
 This guide will walk you through everything you need to add Delay app to an existing Aragon DAO.
 
----
-
 ## TL;DR
 
 Delay app has been published to the following locations:
@@ -17,11 +15,7 @@ To deploy to an organization you can use the [Aragon CLI](https://hack.aragon.or
 aragon dao install <dao-address> delay.open.aragonpm.eth --app-init-args <execution-delay>
 ```
 
----
-
 ## Detailed Installation Guide
-
----
 
 ### 1. Deploy a fresh DAO
 
