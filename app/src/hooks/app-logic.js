@@ -1,11 +1,35 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { AragonApi, useAppState, useApi } from '@aragon/api-react'
 
-import { useScripts } from './scripts-hooks'
+import { useDelays } from './delay-hooks'
 import { formatTime } from '../lib/math-utils'
 import appStateReducer from '../app-state-reducer'
 
-function useScriptAction() {
+export function useSelectedDelay(delayedScripts) {
+  const [selectedScriptId, setSelectedScriptId] = useState('-1')
+  const { ready } = useAppState()
+
+  // The memoized delayed script currently selected.
+  const selectedScript = useMemo(() => {
+    // The `ready` check prevents a delayed script to be selected
+    // until the app state is fully ready.
+    if (!ready || selectedScriptId === '-1') {
+      return null
+    }
+    return delayedScripts.find(script => script.scriptId === selectedScriptId) || null
+  }, [selectedScriptId, delayedScripts, ready])
+
+  return [
+    selectedScript,
+
+    // setSelectedScriptId() is exported directly: since `selectedScriptId` is
+    // set in the `selectedScript` dependencies, it means that the useMemo()
+    // will be updated every time `selectedScriptId` changes.
+    setSelectedScriptId,
+  ]
+}
+
+function useDelayedScriptAction() {
   const api = useApi()
   const defaultAction = 'execute'
 
@@ -25,13 +49,16 @@ export function useAppLogic() {
     return formatTime(executionDelay)
   }, [executionDelay])
 
-  const [delayedScripts, executionTargets] = useScripts()
+  const [delayedScripts, executionTargets] = useDelays()
+  const [selectedDelay, selectDelay] = useSelectedDelay(delayedScripts)
 
   return {
     delayedScripts,
     executionTargets,
     executionDelayFormatted,
-    onScriptAction: useScriptAction(),
+    onDelayAction: useDelayedScriptAction(),
+    selectDelay,
+    selectedDelay,
     isSyncing,
   }
 }

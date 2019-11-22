@@ -18,9 +18,7 @@ const LocalIdentityBadge = ({ entity, ...props }) => {
         label: <LocalLabelPopoverActionLabel hasLabel={Boolean(label)} />,
         onClick: handleClick,
       }}
-      popoverTitle={
-        label ? <LocalLabelPopoverTitle label={label} /> : undefined
-      }
+      popoverTitle={label ? <LocalLabelPopoverTitle label={label} /> : undefined}
       {...props}
     />
   )

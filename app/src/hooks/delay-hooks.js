@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useAppState, useCurrentApp, useInstalledApps } from '@aragon/api-react'
 
 import { EMPTY_ADDRESS } from '../web3-utils'
-import { canExecute } from '..//lib/script-utils'
+import { getStatus } from '../lib/delay-utils'
 import { useNow } from './utils-hooks'
 
 // Temporary fix to make sure executionTargets always returns an array, until
@@ -11,7 +11,7 @@ function getScriptExecutionTargets(script) {
   return script.executionTargets || []
 }
 
-function useDecoratedScripts() {
+function useDecoratedDelays() {
   const { delayedScripts } = useAppState()
   const currentApp = useCurrentApp()
   const installedApps = useInstalledApps()
@@ -65,7 +65,9 @@ function useDecoratedScripts() {
 
     // Reduce the list of installed apps to just those that have been targetted by apps
     const executionTargets = installedApps
-      .filter(app => delayedScripts.some(script => getScriptExecutionTargets(script).includes(app.appAddress)))
+      .filter(app =>
+        delayedScripts.some(script => getScriptExecutionTargets(script).includes(app.appAddress))
+      )
       .map(({ appAddress, identifier, name }) => ({
         appAddress,
         identifier,
@@ -77,21 +79,21 @@ function useDecoratedScripts() {
   }, [delayedScripts, currentApp, installedApps])
 }
 
-export function useScripts() {
-  const [delayedScripts, executionTargets] = useDecoratedScripts()
+export function useDelays() {
+  const [delayedScripts, executionTargets] = useDecoratedDelays()
   const now = useNow()
 
-  const scriptStatus = (delayedScripts || []).map(script => canExecute(script, now))
-  const scriptStatusKey = scriptStatus.join('')
+  const delayStatus = (delayedScripts || []).map(script => getStatus(script, now))
+  const delayStatusKey = delayStatus.map(String).join('')
 
   return [
     useMemo(
       () =>
         (delayedScripts || []).map((script, index) => ({
           ...script,
-          canExecute: scriptStatus[index],
+          status: delayStatus[index],
         })),
-      [delayedScripts, scriptStatusKey]
+      [delayedScripts, delayStatusKey]
     ),
     executionTargets,
   ]
