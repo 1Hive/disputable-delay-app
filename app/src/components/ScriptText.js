@@ -31,7 +31,7 @@ const ScriptText = React.memo(
                 isAddress ? (
                   <span title={part} key={index}>
                     {' '}
-                    <LocalIdentityBadge badgeOnly={disabled} compact entity={part} />{' '}
+                    <LocalIdentityBadge badgeOnly={disabled} compact entity={part} />
                   </span>
                 ) : (
                   <span key={index}>{part}</span>

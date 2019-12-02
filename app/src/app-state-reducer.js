@@ -1,26 +1,26 @@
 /*   
 If script is paused then Boolean(pausedAt) = 1 
-If function returns value < 0 then ds1 goes before ds2
+If function returns value < 0 then script1 goes before script2
 
 paused ?
-| s1 | s2 | result |
---------------------------
-| _  | _  | ds1.executionTime - ds2.executionTime
-| _  | X  | -1
-| X  | _  | 1
-| X  | X  | (ds1.executionTime - ds1.pausedAt) - (ds2.executionTime - ds2.pausedAT) 
+| script1 | script2 | result 
+-------------------------------------------------------------------------------------------------------------
+|    _    |    _    | script1.executionTime - script2.executionTime
+|    _    |    X    | -1
+|    X    |    _    | 1
+|    X    |    X    | (script1.executionTime - script1.pausedAt) - (script2.executionTime - script2.pausedAT) 
 
 Legend:  (_ means 0, X means 1)
 */
 
-const compareDelayedScripts = (ds1, ds2) => {
-  const diff = Boolean(ds1.pausedAt) - Boolean(ds2.pausedAt)
+const compareDelayedScripts = (script1, script2) => {
+  const diff = Boolean(script1.pausedAt) - Boolean(script2.pausedAt)
   if (diff !== 0) return diff
 
-  const timeRemainingDS1 = ds1.executionTime - ds1.pausedAt
-  const timeRemainingDS2 = ds2.executionTime - ds2.pausedAt
+  const timeRemainingScript1 = script1.executionTime - script2.pausedAt
+  const timeRemainingScript2 = script1.executionTime - script2.pausedAt
 
-  return timeRemainingDS1 - timeRemainingDS2
+  return timeRemainingScript1 - timeRemainingScript2
 }
 
 function appStateReducer(state) {

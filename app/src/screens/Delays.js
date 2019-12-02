@@ -83,7 +83,7 @@ const Delays = React.memo(
                 onChange={handleDelayAppFilterChange}
                 items={[
                   'All',
-                  <ThisDelay showTag={multipleOfTarget.get('Delay')} />,
+                  <ThisApp showTag={multipleOfTarget.get('Delay')} />,
                   ...executionTargets.map(
                     ({ name, identifier }) =>
                       `${name}${multipleOfTarget.get(name) && identifier ? ` (${identifier})` : ''}`
@@ -113,7 +113,7 @@ const Delays = React.memo(
   }
 )
 
-const ThisDelay = ({ showTag }) => (
+const ThisApp = ({ showTag }) => (
   <div
     css={`
       display: flex;

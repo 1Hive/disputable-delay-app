@@ -9,7 +9,7 @@ const STATUS_FILTER_PAUSED = 2
 const STATUS_FILTER_PENDING = 3
 const APP_FILTER_THIS = 1
 
-function testStatusFilter(filter, scriptStatus) {
+function checkStatusFilter(filter, scriptStatus) {
   return (
     filter === NULL_FILTER_STATE ||
     (filter === STATUS_FILTER_ONGOING && scriptStatus === STATUS.ONGOING) ||
@@ -18,14 +18,14 @@ function testStatusFilter(filter, scriptStatus) {
   )
 }
 
-function testAppFilter(filter, script, { apps, thisAddress }) {
+function checkAppFilter(filter, script, { apps, thisAppAddress }) {
   const { executionTargets } = script
 
   if (filter === NULL_FILTER_STATE) {
     return true
   }
   if (filter === APP_FILTER_THIS) {
-    return executionTargets.length === 0 || executionTargets.includes(thisAddress)
+    return executionTargets.length === 0 || executionTargets.includes(thisAppAddress)
   }
 
   // Filter order is all, this, ...apps, external so we sub 2 to adjust the index to the apps
@@ -55,10 +55,10 @@ const useFilterDelays = (delayedScripts, executionTargets) => {
   useEffect(() => {
     const filtered = delayedScripts.filter(script => {
       return (
-        testStatusFilter(statusFilter, script.status) &&
-        testAppFilter(appFilter, script, {
+        checkStatusFilter(statusFilter, script.status) &&
+        checkAppFilter(appFilter, script, {
           apps: executionTargets,
-          thisAddress: appAddress,
+          thisAppAddress: appAddress,
         })
       )
     })

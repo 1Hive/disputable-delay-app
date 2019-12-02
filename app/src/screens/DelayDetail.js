@@ -81,7 +81,7 @@ const DelayDetail = React.memo(({ delay, onBack, onDelayAction }) => {
 
 function Status({ delay }) {
   const { status, executionTime, pausedAt } = delay
-  const ONE_SECOND = 1000
+  const ONE_SECOND_IN_MS = 1000
 
   return (
     <div>
@@ -104,7 +104,9 @@ function Status({ delay }) {
               ${textStyle('body3')};
             `}
           >
-            {`${formatTime((executionTime - pausedAt - ONE_SECOND) / ONE_SECOND)} remaining`}
+            {`${formatTime(
+              (executionTime - pausedAt - ONE_SECOND_IN_MS) / ONE_SECOND_IN_MS
+            )} remaining`}
           </span>
         )}
       </div>

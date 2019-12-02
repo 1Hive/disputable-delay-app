@@ -43,7 +43,7 @@ function EmptyFilteredDelays({ onClear }) {
             font-size: 16px;
           `}
         >
-          We can’t find any item matching your filter selection.{' '}
+          We can’t find any item matching your filter selection.
           <Link onClick={onClear}>Clear filters</Link>
         </div>
       </div>
