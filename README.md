@@ -31,11 +31,6 @@ The Delay app should implement the following roles:
 
 Check out our [user guide](./docs/user-guide.md) to go through the functionality of the app.
 
-## How to try Delay app immediately
-
-### Template
-
-If you would like to see the Delay App in action, we recommend the Dandelion Org template available in the Aragon templates directory. Just go to https://preview.1hive.org/, then create a new organization, and choose Dandelion from the template options.
 
 ## How to run the Delay app locally
 
