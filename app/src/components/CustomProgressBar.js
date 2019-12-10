@@ -33,6 +33,6 @@ const Wrapper = styled.div`
   padding: ${GU}px 0px;
 
   & > div > div {
-    transition: transform 1.5s ease;
+    transition: transform 1s linear;
   }
 `
