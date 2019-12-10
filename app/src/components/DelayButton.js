@@ -3,20 +3,20 @@ import styled from 'styled-components'
 
 import { Button, GU, textStyle } from '@aragon/ui'
 
-function DelayButton({ text, beforeIcon, css, ...props }) {
+function DelayButton({ label, beforeIcon, css, ...props }) {
   return (
     <CustomButton wide css={css} {...props}>
       {beforeIcon && (
         <img
           src={beforeIcon}
-          alt={text}
+          alt={label}
           width={14}
           css={`
             margin-right: 8px;
           `}
         />
       )}
-      {text}
+      {label}
     </CustomButton>
   )
 }

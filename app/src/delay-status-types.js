@@ -1,0 +1,7 @@
+const DELAY_STATUS = {
+  ONGOING: Symbol('ONGOING'),
+  PAUSED: Symbol('PAUSED'),
+  PENDING_EXECUTION: Symbol('PENDING_EXECUTION'),
+}
+
+export default DELAY_STATUS

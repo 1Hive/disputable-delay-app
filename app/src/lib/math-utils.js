@@ -24,5 +24,7 @@ export function formatTime(time) {
   const minutes = Math.floor(((time % dayInSeconds) % hourInSeconds) / minuteInSeconds)
   const seconds = ((time % dayInSeconds) % hourInSeconds) % minuteInSeconds
 
-  return [days, hours, minutes, seconds].map((elem, index) => (elem > 0 ? `${elem}${units[index]} ` : '')).join('')
+  return [days, hours, minutes, seconds]
+    .map((elem, index) => (elem > 0 ? `${elem}${units[index]} ` : ''))
+    .join('')
 }

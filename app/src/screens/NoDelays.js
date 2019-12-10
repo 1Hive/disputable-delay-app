@@ -1,7 +1,7 @@
 import React from 'react'
 import { EmptyStateCard, GU, LoadingRing } from '@aragon/ui'
 
-const NoScripts = React.memo(function NoScripts({ isSyncing }) {
+const NoDelays = React.memo(({ isSyncing }) => {
   return (
     <EmptyStateCard
       text={
@@ -26,4 +26,4 @@ const NoScripts = React.memo(function NoScripts({ isSyncing }) {
   )
 })
 
-export default NoScripts
+export default NoDelays

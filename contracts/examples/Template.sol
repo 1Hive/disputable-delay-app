@@ -97,10 +97,10 @@ contract Template is TemplateBase {
         acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
         tokenManager.mint(root, 1); // Give one token to root
 
-        acl.createPermission(delay, voting, voting.CREATE_VOTES_ROLE(), root);
+        acl.createPermission(tokenManager, voting, voting.CREATE_VOTES_ROLE(), root);
 
         acl.createPermission(root, delay, delay.SET_DELAY_ROLE(), root);
-        acl.createPermission(ANY_ENTITY, delay, delay.DELAY_EXECUTION_ROLE(), root);
+        acl.createPermission(voting, delay, delay.DELAY_EXECUTION_ROLE(), root);
         acl.createPermission(root, delay, delay.PAUSE_EXECUTION_ROLE(), root);
         acl.createPermission(root, delay, delay.RESUME_EXECUTION_ROLE(), root);
         acl.createPermission(root, delay, delay.CANCEL_EXECUTION_ROLE(), root);
@@ -114,7 +114,7 @@ contract Template is TemplateBase {
         acl.revokePermission(this, acl, acl.CREATE_PERMISSIONS_ROLE());
         acl.setPermissionManager(root, acl, acl.CREATE_PERMISSIONS_ROLE());
 
-        acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
+        acl.grantPermission(delay, tokenManager, tokenManager.MINT_ROLE());
         acl.revokePermission(this, tokenManager, tokenManager.MINT_ROLE());
         acl.setPermissionManager(root, tokenManager, tokenManager.MINT_ROLE());
 

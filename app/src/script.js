@@ -29,15 +29,15 @@ async function createStore() {
           case 'ExecutionDelaySet':
             return newExecutionDelay(nextState, returnValues)
           case 'DelayedScriptStored':
-            return newScript(nextState, returnValues, blockNumber)
+            return newDelayedScript(nextState, returnValues, blockNumber)
           case 'ExecutionPaused':
-            return updateScript(nextState, returnValues)
+            return updateDelayedScript(nextState, returnValues)
           case 'ExecutionResumed':
-            return updateScript(nextState, returnValues)
+            return updateDelayedScript(nextState, returnValues)
           case 'ExecutedScript':
-            return removeScript(nextState, returnValues)
+            return removeDelayedScript(nextState, returnValues)
           case 'ExecutionCancelled':
-            return removeScript(nextState, returnValues)
+            return removeDelayedScript(nextState, returnValues)
           default:
             return state
         }
@@ -76,12 +76,12 @@ async function newExecutionDelay(state, { executionDelay }) {
   return { ...state, executionDelay }
 }
 
-async function newScript(state, { scriptId }, blockNumber) {
+async function newDelayedScript(state, { scriptId }, blockNumber) {
   const { delayedScripts = [] } = state
 
-  const { timestamp } = await getBlock(blockNumber) // TODO: Move to getScript (keep in mind that updateScript also calls this function)
+  const { timestamp } = await getBlock(blockNumber) // TODO: Move to getDelayedScript (keep in mind that updateScript also calls this function)
   const delayedScript = {
-    ...(await getScript(scriptId, blockNumber)),
+    ...(await getDelayedScript(scriptId, blockNumber)),
     timeSubmitted: marshallDate(timestamp),
     totalTimePaused: 0,
   }
@@ -94,7 +94,7 @@ async function newScript(state, { scriptId }, blockNumber) {
   }
 }
 
-async function updateScript(state, { scriptId }) {
+async function updateDelayedScript(state, { scriptId }) {
   const { delayedScripts } = state
   const index = delayedScripts.findIndex(script => script.scriptId === scriptId)
 
@@ -104,7 +104,7 @@ async function updateScript(state, { scriptId }) {
     }
 
   const oldScript = delayedScripts[index]
-  const newScript = await getScript(scriptId)
+  const newScript = await getDelayedScript(scriptId)
   const updatedScript = mergeScripts(oldScript, newScript)
 
   return {
@@ -117,7 +117,7 @@ async function updateScript(state, { scriptId }) {
   }
 }
 
-function removeScript(state, { scriptId }) {
+function removeDelayedScript(state, { scriptId }) {
   const { delayedScripts } = state
   const index = delayedScripts.findIndex(script => script.scriptId === scriptId)
 
@@ -138,7 +138,7 @@ function removeScript(state, { scriptId }) {
  *                     *
  ***********************/
 
-async function getScript(scriptId) {
+async function getDelayedScript(scriptId) {
   const { executionTime, pausedAt, evmCallScript } = await app
     .call('delayedScripts', scriptId)
     .toPromise()
