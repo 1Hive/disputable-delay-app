@@ -30,6 +30,7 @@ contract Delay is AragonApp, IForwarder {
     uint64 public executionDelay;
     uint256 public delayedScriptsNewIndex = 0;
     mapping(uint256 => DelayedScript) public delayedScripts;
+    address[] scriptRunnerBlacklist;
 
     event DelayedScriptStored(uint256 scriptId);
     event ExecutionDelaySet(uint64 executionDelay);
@@ -50,6 +51,7 @@ contract Delay is AragonApp, IForwarder {
     function initialize(uint64 _executionDelay) external onlyInit {
         initialized();
         executionDelay = _executionDelay;
+        scriptRunnerBlacklist.push(address(this));
     }
 
     /**
@@ -119,7 +121,7 @@ contract Delay is AragonApp, IForwarder {
     */
     function execute(uint256 _delayedScriptId) external {
         require(canExecute(_delayedScriptId), ERROR_CAN_NOT_EXECUTE);
-        runScript(delayedScripts[_delayedScriptId].evmCallScript, new bytes(0), new address[](0));
+        runScript(delayedScripts[_delayedScriptId].evmCallScript, new bytes(0), scriptRunnerBlacklist);
 
         delete delayedScripts[_delayedScriptId];
 

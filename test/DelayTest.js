@@ -2,7 +2,7 @@ const Delay = artifacts.require('Delay')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const deployDAO = require('./helpers/deployDAO')
-const { deployedContract, assertRevert, timeTravel } = require('./helpers/helpers')
+const { deployedContract, assertRevert, timeTravel, getLog } = require('./helpers/helpers')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const { hash: nameHash } = require('eth-ens-namehash')
 
@@ -282,6 +282,20 @@ contract('Delay', ([rootAccount]) => {
             await delay.cancelExecution(0)
 
             await assertRevert(delay.execute(0), 'DELAY_NO_SCRIPT')
+          })
+
+          it('reverts when evmScript reenters delay contract', async () => {
+            const action = {
+              to: delay.address,
+              calldata: delay.contract.methods.isForwarder().encodeABI(),
+            }
+
+            const reenterringScript = encodeCallScript([action])
+            const delayReceipt = await delay.delayExecution(reenterringScript)
+            const scriptId = getLog(delayReceipt, 'DelayedScriptStored', 'scriptId')
+
+            await timeTravel(web3)(INITIAL_DELAY + 3)
+            await assertRevert(delay.execute(scriptId), 'EVMCALLS_BLACKLISTED_CALL')
           })
         })
       })
