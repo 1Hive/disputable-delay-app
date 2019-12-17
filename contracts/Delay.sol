@@ -17,6 +17,7 @@ contract Delay is AragonApp, IForwarder {
     string private constant ERROR_NO_SCRIPT = "DELAY_NO_SCRIPT";
     string private constant ERROR_CAN_NOT_EXECUTE = "DELAY_CAN_NOT_EXECUTE";
     string private constant ERROR_CAN_NOT_PAUSE = "DELAY_CAN_NOT_PAUSE";
+    string private constant ERROR_SCRIPT_EXECUTION_PASSED = "DELAY_SCRIPT_EXECUTION_PASSED";
     string private constant ERROR_CAN_NOT_RESUME = "DELAY_CAN_NOT_RESUME";
     string private constant ERROR_CAN_NOT_FORWARD = "DELAY_CAN_NOT_FORWARD";
 
@@ -78,8 +79,11 @@ contract Delay is AragonApp, IForwarder {
     * @param _delayedScriptId The ID of the script execution to pause
     */
     function pauseExecution(uint256 _delayedScriptId) external auth(PAUSE_EXECUTION_ROLE) {
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
         require(!_isExecutionPaused(_delayedScriptId), ERROR_CAN_NOT_PAUSE);
-        delayedScripts[_delayedScriptId].pausedAt = getTimestamp64();
+        require(getTimestamp64() < delayedScript.executionTime, ERROR_SCRIPT_EXECUTION_PASSED);
+
+        delayedScript.pausedAt = getTimestamp64();
 
         emit ExecutionPaused(_delayedScriptId);
     }

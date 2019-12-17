@@ -164,10 +164,10 @@ contract('Delay', ([rootAccount]) => {
 
           it('pauses execution script', async () => {
             const { timestamp } = await web3.eth.getBlock('latest')
+
             await delay.pauseExecution(0)
 
             const { pausedAt } = await delay.delayedScripts(0)
-
             assert.closeTo(pausedAt.toNumber(), timestamp, 3)
           })
 
@@ -178,6 +178,11 @@ contract('Delay', ([rootAccount]) => {
           it('reverts when pausing already paused script execution', async () => {
             await delay.pauseExecution(0)
             await assertRevert(delay.pauseExecution(0), 'DELAY_CAN_NOT_PAUSE')
+          })
+
+          it('reverts when pausing script past execution time', async () => {
+            await timeTravel(web3)(INITIAL_DELAY)
+            await assertRevert(delay.pauseExecution(0), 'DELAY_SCRIPT_EXECUTION_PASSED')
           })
         })
 
@@ -250,11 +255,10 @@ contract('Delay', ([rootAccount]) => {
           })
 
           it('executes the script after execution is resumed', async () => {
-            await timeTravel(web3)(INITIAL_DELAY + 3)
-
             await delay.pauseExecution(0)
             await delay.resumeExecution(0)
 
+            await timeTravel(web3)(INITIAL_DELAY + 3)
             await delay.execute(0)
           })
 
@@ -267,10 +271,9 @@ contract('Delay', ([rootAccount]) => {
           })
 
           it('reverts when executing paused script', async () => {
-            await timeTravel(web3)(INITIAL_DELAY + 3)
-
             await delay.pauseExecution(0)
 
+            await timeTravel(web3)(INITIAL_DELAY + 3)
             await assertRevert(delay.execute(0), 'DELAY_CAN_NOT_EXECUTE')
           })
 
