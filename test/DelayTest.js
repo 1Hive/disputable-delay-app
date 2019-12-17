@@ -231,6 +231,10 @@ contract('Delay', ([rootAccount]) => {
             assert.equal(actualCallScript, null)
             assert.equal(actualPausedAt, 0)
           })
+
+          it('reverts when cancelling non-existent script', async () => {
+            await assertRevert(delay.cancelExecution(1), 'DELAY_NO_SCRIPT')
+          })
         })
 
         describe('execute(uint256 _delayedScriptId)', () => {
