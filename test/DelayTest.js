@@ -288,18 +288,18 @@ contract('Delay', ([rootAccount]) => {
             await assertRevert(delay.execute(0), 'DELAY_NO_SCRIPT')
           })
 
-          it('reverts when evmScript reenters delay contract', async () => {
+          it('reverts when evmScript reenters delay contract, attempting to execute same script twice', async () => {
             const action = {
               to: delay.address,
-              calldata: delay.contract.methods.isForwarder().encodeABI(),
+              calldata: delay.contract.methods.execute(1).encodeABI(),
             }
 
-            const reenterringScript = encodeCallScript([action])
-            const delayReceipt = await delay.delayExecution(reenterringScript)
+            const reenteringScript = encodeCallScript([action])
+            const delayReceipt = await delay.delayExecution(reenteringScript)
             const scriptId = getLog(delayReceipt, 'DelayedScriptStored', 'scriptId')
 
             await timeTravel(web3)(INITIAL_DELAY + 3)
-            await assertRevert(delay.execute(scriptId), 'EVMCALLS_BLACKLISTED_CALL')
+            await assertRevert(delay.execute(scriptId), 'DELAY_NO_SCRIPT')
           })
         })
       })
