@@ -5,7 +5,7 @@
 
 The delay app enables Aragon organizations to require a configurable delay between when an intent is sent and when it is executed.
 
-#### 🚨 Security Review Status: Contracts frozen for audit as of commit [0edebf7b07bd44ad00e3ab61ac5c750d440278be](https://github.com/1Hive/delay-app/tree/0edebf7b07bd44ad00e3ab61ac5c750d440278be/contracts)
+#### 🚨 Security Review Status: Contracts frozen for audit as of commit 
 
 The code in this repo has not been audited.
 
