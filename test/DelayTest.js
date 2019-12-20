@@ -2,7 +2,7 @@ const Delay = artifacts.require('Delay')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const deployDAO = require('./helpers/deployDAO')
-const { deployedContract, assertRevert, timeTravel } = require('./helpers/helpers')
+const { deployedContract, assertRevert, timeTravel, getLog } = require('./helpers/helpers')
 const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 const { hash: nameHash } = require('eth-ens-namehash')
 
@@ -164,10 +164,10 @@ contract('Delay', ([rootAccount]) => {
 
           it('pauses execution script', async () => {
             const { timestamp } = await web3.eth.getBlock('latest')
+
             await delay.pauseExecution(0)
 
             const { pausedAt } = await delay.delayedScripts(0)
-
             assert.closeTo(pausedAt.toNumber(), timestamp, 3)
           })
 
@@ -178,6 +178,11 @@ contract('Delay', ([rootAccount]) => {
           it('reverts when pausing already paused script execution', async () => {
             await delay.pauseExecution(0)
             await assertRevert(delay.pauseExecution(0), 'DELAY_CAN_NOT_PAUSE')
+          })
+
+          it('reverts when pausing script past execution time', async () => {
+            await timeTravel(web3)(INITIAL_DELAY)
+            await assertRevert(delay.pauseExecution(0), 'DELAY_SCRIPT_EXECUTION_PASSED')
           })
         })
 
@@ -226,6 +231,10 @@ contract('Delay', ([rootAccount]) => {
             assert.equal(actualCallScript, null)
             assert.equal(actualPausedAt, 0)
           })
+
+          it('reverts when cancelling non-existent script', async () => {
+            await assertRevert(delay.cancelExecution(1), 'DELAY_NO_SCRIPT')
+          })
         })
 
         describe('execute(uint256 _delayedScriptId)', () => {
@@ -250,11 +259,10 @@ contract('Delay', ([rootAccount]) => {
           })
 
           it('executes the script after execution is resumed', async () => {
-            await timeTravel(web3)(INITIAL_DELAY + 3)
-
             await delay.pauseExecution(0)
             await delay.resumeExecution(0)
 
+            await timeTravel(web3)(INITIAL_DELAY + 3)
             await delay.execute(0)
           })
 
@@ -267,10 +275,9 @@ contract('Delay', ([rootAccount]) => {
           })
 
           it('reverts when executing paused script', async () => {
-            await timeTravel(web3)(INITIAL_DELAY + 3)
-
             await delay.pauseExecution(0)
 
+            await timeTravel(web3)(INITIAL_DELAY + 3)
             await assertRevert(delay.execute(0), 'DELAY_CAN_NOT_EXECUTE')
           })
 
@@ -279,6 +286,20 @@ contract('Delay', ([rootAccount]) => {
             await delay.cancelExecution(0)
 
             await assertRevert(delay.execute(0), 'DELAY_NO_SCRIPT')
+          })
+
+          it('reverts when evmScript reenters delay contract, attempting to execute same script twice', async () => {
+            const action = {
+              to: delay.address,
+              calldata: delay.contract.methods.execute(1).encodeABI(),
+            }
+
+            const reenteringScript = encodeCallScript([action])
+            const delayReceipt = await delay.delayExecution(reenteringScript)
+            const scriptId = getLog(delayReceipt, 'DelayedScriptStored', 'scriptId')
+
+            await timeTravel(web3)(INITIAL_DELAY + 3)
+            await assertRevert(delay.execute(scriptId), 'DELAY_NO_SCRIPT')
           })
         })
       })
