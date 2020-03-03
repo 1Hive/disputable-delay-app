@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { AragonApi, useAppState, useApi } from '@aragon/api-react'
+import { AragonApi, useApi, useAppState, useGuiStyle } from '@aragon/api-react'
 
 import { useDelays } from './delay-hooks'
 import { formatTime } from '../lib/math-utils'
@@ -66,3 +66,5 @@ export function useAppLogic() {
 export function AppLogicProvider({ children }) {
   return <AragonApi reducer={appStateReducer}>{children}</AragonApi>
 }
+
+export { useGuiStyle }

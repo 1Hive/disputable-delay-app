@@ -2,7 +2,7 @@ import React, { useCallback } from 'react'
 import { Main, Tag, Header, SyncIndicator, GU } from '@aragon/ui'
 
 import { IdentityProvider } from './identity-manager'
-import { AppLogicProvider, useAppLogic } from './hooks/app-logic'
+import { AppLogicProvider, useAppLogic, useGuiStyle } from './hooks/app-logic'
 import useFilterDelays from './hooks/useFilterDelays'
 
 import Title from './components/Title'
@@ -30,12 +30,16 @@ const App = React.memo(() => {
     handleClearFilters,
   } = useFilterDelays(delayedScripts, executionTargets)
 
+  const { appearance } = useGuiStyle()
+
+  console.log('appearance', appearance)
+
   const handleBack = useCallback(() => {
     selectDelay(-1)
   }, [selectDelay])
 
   return (
-    <React.Fragment>
+    <Main theme={appearance}>
       <SyncIndicator visible={isSyncing} />
       {!delayedScripts.length && (
         <div
@@ -82,18 +86,16 @@ const App = React.memo(() => {
           )}
         </React.Fragment>
       )}
-    </React.Fragment>
+    </Main>
   )
 })
 
 export default function Delay() {
   return (
-    <Main assetsUrl="./aragon-ui">
-      <AppLogicProvider>
-        <IdentityProvider>
-          <App />
-        </IdentityProvider>
-      </AppLogicProvider>
-    </Main>
+    <AppLogicProvider>
+      <IdentityProvider>
+        <App />
+      </IdentityProvider>
+    </AppLogicProvider>
   )
 }
