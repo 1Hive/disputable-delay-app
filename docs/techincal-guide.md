@@ -211,12 +211,13 @@ An event is emitted upon successful execution.
 * @param _delayedScriptId The ID of the script to execute
 */
 function execute(uint256 _delayedScriptId) external {
-		require(canExecute(_delayedScriptId), ERROR_CAN_NOT_EXECUTE);
-		runScript(delayedScripts[_delayedScriptId].evmCallScript, new bytes(0), new address[](0));
+	require(canExecute(_delayedScriptId), ERROR_CAN_NOT_EXECUTE);
 
-		delete delayedScripts[_delayedScriptId];
+	DelayedScript memory delayedScript = delayedScripts[_delayedScriptId];
+	delete delayedScripts[_delayedScriptId];
 
-		emit ExecutedScript(_delayedScriptId);
+	runScript(delayedScript.evmCallScript, new bytes(0), new address[](0));
+	emit ExecutedScript(_delayedScriptId);
 }
 ```
 
@@ -286,8 +287,11 @@ The caller of this function must have the `PAUSE_EXECUTION_ROLE` and the `_delay
 * @param _delayedScriptId The ID of the script execution to pause
 */
 function pauseExecution(uint256 _delayedScriptId) external auth(PAUSE_EXECUTION_ROLE) {
+		DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
 		require(!_isExecutionPaused(_delayedScriptId), ERROR_CAN_NOT_PAUSE);
-		delayedScripts[_delayedScriptId].pausedAt = getTimestamp64();
+		require(getTimestamp64() < delayedScript.executionTime, ERROR_SCRIPT_EXECUTION_PASSED);
+
+		delayedScript.pausedAt = getTimestamp64();
 
 		emit ExecutionPaused(_delayedScriptId);
 }

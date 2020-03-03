@@ -6,13 +6,13 @@ This guide will walk you through everything you need to add Delay app to an exis
 
 Delay app has been published to the following locations:
 
-- Rinkeby: `delay.open.aragonpm.eth`
-- Mainnet: -
+- Mainnet: `delay.aragonpm.eth`
+- Rinkeby: `delay.aragonpm.eth`
 
 To deploy to an organization you can use the [Aragon CLI](https://hack.aragon.org/docs/cli-intro.html).
 
 ```sh
-aragon dao install <dao-address> delay.open.aragonpm.eth --app-init-args <execution-delay>
+aragon dao install <dao-address> delay.aragonpm.eth --app-init-args <execution-delay>
 ```
 
 ## Detailed Installation Guide
@@ -35,14 +35,14 @@ voting=0x41CA57d1e65Cdcd3A68A0e9f8E835F3a1FeDc655
 
 ### 2. Install Delay app to the DAO
 
-Delay app has been published to the APM on Rinkeby at `delay.open.aragonpm.eth`
+Delay app has been published to the APM on Mainnet and Rinkeby at `delay.aragonpm.eth`
 
 ```sh
-aragon dao install $dao delay.open.aragonpm.eth --app-init-args <delay-execution> --environment aragon:rinkeby
+aragon dao install $dao delay.aragonpm.eth --app-init-args <delay-execution> --environment aragon:rinkeby
 ```
 
-If the installation was executed successfully, you should see in you terminal:
-`✔ Installed delay.open.aragonpm.eth at: <delay-address>`
+If the installation was executed successfully, you should see in your terminal:
+`✔ Installed delay.aragonpm.eth at: <delay-address>`
 
 The default setup of the democracy DAO is for a vote of the token holders to take place before actions are executed. Head over to the voting app and you will see a new vote.
 
