@@ -5,9 +5,7 @@
 
 The delay app enables Aragon organizations to require a configurable delay between when an intent is sent and when it is executed.
 
-#### 🚨 Security Review Status: Contracts updated for audit as of commit [754a143eb14c8766c117faa6c13b39fa672c7e80](https://github.com/1Hive/delay-app/tree/754a143eb14c8766c117faa6c13b39fa672c7e80/contracts)
-
-The code in this repo has not been audited.
+#### 🚨 Security Review Status: [Contract audited](https://diligence.consensys.net/audits/2019/12/dandelion-organizations/)
 
 ## How does it work?
 
@@ -21,8 +19,9 @@ The Delay app is initialized with the `_executionDelay` parameter. This defines 
 
 The Delay app should implement the following roles:
 
-- `SET_DELAY_ROLE`: This allows for setting a delay.
-- `DELAY_EXECUTION_ROLE`: This allows for executing a delay once it is past it's delay window.
+- `SET_DELAY_ROLE`: This allows for changing the `executionDelay` period.
+  > Note: Changing the execution delay does not affect current delays.
+- `DELAY_EXECUTION_ROLE`: Any entity with this role can delay an intent.
 - `PAUSE_EXECUTION_ROLE`: This allows for pausing a delay.
 - `RESUME_EXECUTION_ROLE`: This allows for resuming a paused delay.
 - `CANCEL_EXECUTION_ROLE`: This allows for cancelling a delay.
@@ -30,7 +29,6 @@ The Delay app should implement the following roles:
 ### Interface
 
 Check out our [user guide](./docs/user-guide.md) to go through the functionality of the app.
-
 
 ## How to run the Delay app locally
 
@@ -65,7 +63,7 @@ For a detailed step by step guide you can see [our installation guide](./docs/in
 To deploy to an organization you can use the [aragonCLI](https://hack.aragon.org/docs/cli-intro.html).
 
 ```sh
-aragon dao install <dao-address> delay.open.aragonpm.eth --app-init-args <delay-execution>
+aragon dao install <dao-address> delay.aragonpm.eth --app-init-args <delay-execution>
 ```
 
 ## Contributing
