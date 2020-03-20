@@ -1,32 +1,45 @@
-import React, { useCallback, useMemo, useState } from 'react'
-import { AragonApi, useApi, useAppState, useGuiStyle } from '@aragon/api-react'
+import React, { useCallback, useMemo } from 'react'
+import { AragonApi, useApi, useAppState, useGuiStyle, usePath } from '@aragon/api-react'
 
 import { useDelays } from './delay-hooks'
 import { formatTime } from '../lib/math-utils'
 import appStateReducer from '../app-state-reducer'
 
+const DELAY_ID_PATH_RE = /^\/delay\/([0-9]+)\/?$/
+const NO_DELAY_ID = '-1'
+
+function delayIdFromPath(path) {
+  if (!path) {
+    return NO_DELAY_ID
+  }
+  const matches = path.match(DELAY_ID_PATH_RE)
+  return matches ? matches[1] : NO_DELAY_ID
+}
+
 export function useSelectedDelay(delayedScripts) {
-  const [selectedScriptId, setSelectedScriptId] = useState('-1')
+  const [path, requestPath] = usePath()
+
   const { ready } = useAppState()
 
   // The memoized delayed script currently selected.
   const selectedScript = useMemo(() => {
+    const selectedScriptId = delayIdFromPath(path)
     // The `ready` check prevents a delayed script to be selected
     // until the app state is fully ready.
-    if (!ready || selectedScriptId === '-1') {
+    if (!ready || selectedScriptId === NO_DELAY_ID) {
       return null
     }
     return delayedScripts.find(script => script.scriptId === selectedScriptId) || null
-  }, [selectedScriptId, delayedScripts, ready])
+  }, [path, delayedScripts, ready])
 
-  return [
-    selectedScript,
+  const selectDelay = useCallback(
+    delayId => {
+      requestPath(String(delayId) === NO_DELAY_ID ? '' : `/delay/${delayId}/`)
+    },
+    [requestPath]
+  )
 
-    // setSelectedScriptId() is exported directly: since `selectedScriptId` is
-    // set in the `selectedScript` dependencies, it means that the useMemo()
-    // will be updated every time `selectedScriptId` changes.
-    setSelectedScriptId,
-  ]
+  return [selectedScript, selectDelay]
 }
 
 function useDelayedScriptAction() {

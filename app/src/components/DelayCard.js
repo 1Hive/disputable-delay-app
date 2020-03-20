@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import styled from 'styled-components'
 
 import { Card, textStyle, GU } from '@aragon/ui'
@@ -20,8 +20,15 @@ const DelayCard = React.memo(({ delay, selectDelay }) => {
     pausedAt,
   } = delay
 
+  const handleSelectDelay = useCallback(
+    delayId => {
+      selectDelay(delayId)
+    },
+    [selectDelay]
+  )
+
   return (
-    <CardItem onClick={() => selectDelay(delay.scriptId)}>
+    <CardItem onClick={() => handleSelectDelay(delay.scriptId)}>
       <div>
         <LocalLabelAppBadge
           appAddress={executionTargetData.address}
