@@ -1,6 +1,16 @@
 import React from 'react'
-import { Bar, Box, BackButton, Countdown, GU, Split, textStyle, useTheme } from '@aragon/ui'
-
+import {
+  Bar,
+  Box,
+  BackButton,
+  Countdown,
+  GU,
+  Split,
+  textStyle,
+  useLayout,
+  useTheme,
+} from '@aragon/ui'
+import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import DelayActions from '../components/DelayActions'
 import ScriptText from '../components/ScriptText'
 import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
@@ -11,8 +21,9 @@ import { formatTime, toHours } from '../lib/math-utils'
 
 const DelayDetail = React.memo(({ delay, onBack, onDelayAction }) => {
   const theme = useTheme()
+  const { layoutName } = useLayout()
 
-  const { executionTargetData, executionDescription } = delay
+  const { executionTargetData, executionDescription, creator } = delay
 
   return (
     <React.Fragment>
@@ -43,22 +54,51 @@ const DelayDetail = React.memo(({ delay, onBack, onDelayAction }) => {
               >
                 <span css="font-weight: bold;">Delay #{delay.scriptId}</span>
               </h1>
-              <div>
-                <h2
-                  css={`
-                    ${textStyle('label2')};
-                    color: ${theme.surfaceContentSecondary};
-                    margin-bottom: ${2 * GU}px;
-                  `}
-                >
-                  Description
-                </h2>
-                <div
-                  css={`
-                    ${textStyle('body2')};
-                  `}
-                >
-                  <ScriptText text={executionDescription} />
+              <div
+                css={`
+                  display: grid;
+                  grid-template-columns: ${layoutName === 'large'
+                    ? '1fr minmax(300px, auto)'
+                    : 'auto'};
+                  grid-gap: ${layoutName === 'large' ? 5 * GU : 2.5 * GU}px;
+                `}
+              >
+                <div>
+                  <h2
+                    css={`
+                      ${textStyle('label2')};
+                      color: ${theme.surfaceContentSecondary};
+                      margin-bottom: ${2 * GU}px;
+                    `}
+                  >
+                    Description
+                  </h2>
+                  <div
+                    css={`
+                      ${textStyle('body2')};
+                    `}
+                  >
+                    <ScriptText text={executionDescription} />
+                  </div>
+                </div>
+                <div>
+                  <h2
+                    css={`
+                      ${textStyle('label2')};
+                      color: ${theme.surfaceContentSecondary};
+                      margin-bottom: ${2 * GU}px;
+                    `}
+                  >
+                    Created By
+                  </h2>
+                  <div
+                    css={`
+                      display: flex;
+                      align-items: flex-start;
+                    `}
+                  >
+                    <LocalIdentityBadge entity={creator} />
+                  </div>
                 </div>
               </div>
               <DelayActions
