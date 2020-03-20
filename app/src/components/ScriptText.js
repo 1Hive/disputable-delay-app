@@ -36,14 +36,16 @@ const ScriptText = React.memo(
                     <LocalIdentityBadge badgeOnly={disabled} compact entity={part} />
                   </span>
                 ) : (
-                  transformIPFSHash(part, (word, isIpfs, i) => {
-                    const ipfsUrl = generateURI(word)
-                    return isIpfs ? (
-                      <Link href={ipfsUrl}>{ipfsUrl} </Link>
-                    ) : (
-                      <span key={index}>{word}</span>
-                    )
-                  })
+                  <React.Fragment key={index}>
+                    {transformIPFSHash(part, (word, isIpfsHash, i) => {
+                      if (isIpfsHash) {
+                        const ipfsUrl = generateURI(word)
+                        return <Link href={ipfsUrl}>{ipfsUrl} </Link>
+                      }
+
+                      return <span key={i}>{word}</span>
+                    })}
+                  </React.Fragment>
                 )
               )}
               <br />
