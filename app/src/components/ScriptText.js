@@ -41,7 +41,7 @@ const ScriptText = React.memo(
                       if (isIpfsHash) {
                         const ipfsUrl = generateURI(word)
                         return (
-                          <Link href={ipfsUrl} key={i} disabled>
+                          <Link href={ipfsUrl} key={i} disabled={disabled}>
                             {word}
                           </Link>
                         )
