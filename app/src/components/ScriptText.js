@@ -1,6 +1,8 @@
 import React from 'react'
+import { Link } from '@aragon/ui'
 import PropTypes from 'prop-types'
 import { transformAddresses } from '../web3-utils'
+import { transformIPFSHash, generateURI } from '../lib/ipfs-utils'
 import AutoLink from './AutoLink'
 import LocalIdentityBadge from './LocalIdentityBadge/LocalIdentityBadge'
 
@@ -34,7 +36,14 @@ const ScriptText = React.memo(
                     <LocalIdentityBadge badgeOnly={disabled} compact entity={part} />
                   </span>
                 ) : (
-                  <span key={index}>{part}</span>
+                  transformIPFSHash(part, (word, isIpfs, i) => {
+                    const ipfsUrl = generateURI(word)
+                    return isIpfs ? (
+                      <Link href={ipfsUrl}>{ipfsUrl} </Link>
+                    ) : (
+                      <span key={index}>{word}</span>
+                    )
+                  })
                 )
               )}
               <br />
