@@ -32,7 +32,7 @@ const DelayCard = React.memo(({ delay, selectDelay }) => {
       </div>
       <Description>
         <span css="font-weight: bold;">#{delay.scriptId}:</span>{' '}
-        <ScriptText disabled={false} text={delay.executionDescription} />
+        <ScriptText text={delay.executionDescription} disabled />
       </Description>
       <div>
         {status === STATUS.PENDING_EXECUTION ? (

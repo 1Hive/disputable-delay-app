@@ -12,9 +12,7 @@ export const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000'
 export function transformAddresses(str, callback) {
   return str
     .split(ETH_ADDRESS_SPLIT_REGEX)
-    .map((part, index) =>
-      callback(part, ETH_ADDRESS_TEST_REGEX.test(part), index)
-    )
+    .map((part, index) => callback(part, ETH_ADDRESS_TEST_REGEX.test(part), index))
 }
 
 /**

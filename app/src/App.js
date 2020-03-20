@@ -32,8 +32,6 @@ const App = React.memo(() => {
 
   const { appearance } = useGuiStyle()
 
-  console.log('appearance', appearance)
-
   const handleBack = useCallback(() => {
     selectDelay(-1)
   }, [selectDelay])

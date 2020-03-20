@@ -13,7 +13,7 @@ async function initialize() {
 
 async function createStore() {
   return app.store(
-    (state, { event, returnValues, blockNumber }) => {
+    (state, { event, returnValues, blockNumber, transactionHash }) => {
       const nextState = {
         ...state,
       }
@@ -29,7 +29,7 @@ async function createStore() {
           case 'ExecutionDelaySet':
             return newExecutionDelay(nextState, returnValues)
           case 'DelayedScriptStored':
-            return newDelayedScript(nextState, returnValues, blockNumber)
+            return newDelayedScript(nextState, returnValues, blockNumber, transactionHash)
           case 'ExecutionPaused':
             return updateDelayedScript(nextState, returnValues)
           case 'ExecutionResumed':
@@ -72,18 +72,20 @@ function initializeState() {
 
 async function newExecutionDelay(state, { executionDelay }) {
   app.identify(`Delay ${formatTime(executionDelay)}`)
-
   return { ...state, executionDelay }
 }
 
-async function newDelayedScript(state, { scriptId }, blockNumber) {
+async function newDelayedScript(state, { scriptId }, blockNumber, transactionHash) {
   const { delayedScripts = [] } = state
+
+  const { from: creator } = await app.web3Eth('getTransactionReceipt', transactionHash).toPromise()
 
   const { timestamp } = await getBlock(blockNumber) // TODO: Move to getDelayedScript (keep in mind that updateScript also calls this function)
   const delayedScript = {
     ...(await getDelayedScript(scriptId, blockNumber)),
     timeSubmitted: marshallDate(timestamp),
     totalTimePaused: 0,
+    creator,
   }
 
   return {
@@ -185,7 +187,8 @@ async function getDelayedScript(scriptId) {
  */
 function mergeScripts(oldScript, newScript) {
   // We need to keep the time the script was submitted and the total time it was paused for progress bar
-  const { timeSubmitted, totalTimePaused, executionTime: oldExecutionTime } = oldScript || {}
+  const { timeSubmitted, totalTimePaused, executionTime: oldExecutionTime, creator } =
+    oldScript || {}
 
   // If resumed => timePaused > 0 else timePaused = 0
   const timePaused = newScript.executionTime - oldExecutionTime
@@ -194,6 +197,7 @@ function mergeScripts(oldScript, newScript) {
     ...newScript,
     timeSubmitted,
     totalTimePaused: totalTimePaused + timePaused,
+    creator,
   }
 }
 
