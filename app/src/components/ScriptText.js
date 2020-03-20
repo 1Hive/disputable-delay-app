@@ -40,7 +40,11 @@ const ScriptText = React.memo(
                     {transformIPFSHash(part, (word, isIpfsHash, i) => {
                       if (isIpfsHash) {
                         const ipfsUrl = generateURI(word)
-                        return <Link href={ipfsUrl}>{ipfsUrl} </Link>
+                        return (
+                          <Link href={ipfsUrl} key={i}>
+                            {ipfsUrl}{' '}
+                          </Link>
+                        )
                       }
 
                       return <span key={i}>{word}</span>
