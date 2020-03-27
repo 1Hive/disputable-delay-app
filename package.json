@@ -1,6 +1,6 @@
 {
   "name": "delay",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
   "dependencies": {
     "@aragon/os": "^4.2.1",
