@@ -19,7 +19,7 @@ There are 4 main actions a user can take relative to a script:
 
 ### Creating a delayed action
 
-In this example we have set up the DAO so the voting app can create delayed actions and the delay app can mint tokens. This menas that when trying to mint some org tokens, you'll have to create a vote first, which if approved, the action will be delayed for 1 minute.
+In this example we have set up the DAO so the voting app can create delayed actions and the delay app can mint tokens. This means that when trying to mint some org tokens, you'll have to create a vote first, which if approved, the action will be delayed for 1 minute.
 
 <p align="center">
     <img src="./resources/delay-script.gif" width="600" />
@@ -51,7 +51,7 @@ After the delay period for a script elapses, anyone can execute the script. Just
 
 ### Cancel a delayed action
 
-A script can be cancelled at any time, even if the delayed period has already elapsed. Click in the `Cancel` button and create the transaction. After the tx is mined the script won's have executed and it should be no longer visible in the UI.
+A script can be cancelled at any time, even if the delayed period has already elapsed. Click in the `Cancel` button and create the transaction. After the tx is mined, the script won't be able to be executed and it should be no longer visible in the UI.
 
 <p align="center">
     <img src="./resources/cancel-script.gif" width="600" />
