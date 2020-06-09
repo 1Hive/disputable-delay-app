@@ -3,7 +3,7 @@ const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const deployDAO = require('./helpers/deployDAO')
 const { deployedContract, assertRevert, timeTravel, getLog } = require('./helpers/helpers')
-const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
+const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
 const { hash: nameHash } = require('eth-ens-namehash')
 
 contract('Delay', ([rootAccount]) => {

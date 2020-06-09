@@ -5,7 +5,7 @@ const ACL = artifacts.require('@aragon/core/contracts/acl/ACL')
 const EVMScriptRegistryFactory = artifacts.require('@aragon/core/contracts/factory/EVMScriptRegistryFactory')
 const DAOFactory = artifacts.require('@aragon/core/contracts/factory/DAOFactory')
 
-const { getEventArgument } = require('@aragon/test-helpers/events')
+const { getEventArgument } = require('@aragon/contract-test-helpers/events')
 
 const deployDAO = async appManager => {
   // Deploy a DAOFactory.
