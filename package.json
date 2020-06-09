@@ -3,7 +3,8 @@
   "version": "1.1.0",
   "description": "",
   "dependencies": {
-    "@aragon/os": "^4.2.1",
+    "@aragon/os": "aragon/aragonOS#add_disputable_base_app",
+    "@aragon/apps-agreement": "0.1.0",
     "@aragon/apps-shared-minime": "^1.0.1",
     "@aragon/apps-token-manager": "2.1.0",
     "@aragon/apps-voting": "2.1.0"
