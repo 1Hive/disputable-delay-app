@@ -7,35 +7,48 @@ import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 
 /*
-Questions:
-Should you be able to challenge an action that is currently paused? Currently no
-Should you be able to pause/challenge an action that has passed the delay period but is yet to be executed? Currently no
-Should we keep and display a history of delayed scripts? Currently we delete them
+TODO: Remove the below once UI is updated.
+Possible states:
+Normal
+Paused (independently of Agreements)
+Challenged (also Paused)
+Executable
+Closed (also Executable and Agreement action closed)
+Executed (also Closed, determined by searching for ID in ExecutedScript event)
+Cancelled (also Closed, determined by searching for ID in ExecutionCancelled event)
 */
 
 contract Delay is DisputableAragonApp, IForwarder {
     using SafeMath64 for uint64;
 
-    bytes32 public constant SET_DELAY_ROLE = keccak256("SET_DELAY_ROLE");
-    bytes32 public constant DELAY_EXECUTION_ROLE = keccak256("DELAY_EXECUTION_ROLE");
-    bytes32 public constant PAUSE_EXECUTION_ROLE = keccak256("PAUSE_EXECUTION_ROLE");
-    bytes32 public constant RESUME_EXECUTION_ROLE = keccak256("RESUME_EXECUTION_ROLE");
-    bytes32 public constant CANCEL_EXECUTION_ROLE = keccak256("CANCEL_EXECUTION_ROLE");
+    /**
+        bytes32 public constant SET_DELAY_ROLE = keccak256("SET_DELAY_ROLE");
+        bytes32 public constant DELAY_EXECUTION_ROLE = keccak256("DELAY_EXECUTION_ROLE");
+        bytes32 public constant PAUSE_EXECUTION_ROLE = keccak256("PAUSE_EXECUTION_ROLE");
+        bytes32 public constant RESUME_EXECUTION_ROLE = keccak256("RESUME_EXECUTION_ROLE");
+        bytes32 public constant CANCEL_EXECUTION_ROLE = keccak256("CANCEL_EXECUTION_ROLE");
+    */
+    bytes32 public constant SET_DELAY_ROLE = 0x2b56821903fce674a357ec19f2dd583428c0cc74e6be302c348b3a3ffa5b4f66;
+    bytes32 public constant DELAY_EXECUTION_ROLE = 0x68a7ca9b0904e026378fb888f3be95ada2a0c0b11f58c40530c1a383c0f99ce9;
+    bytes32 public constant PAUSE_EXECUTION_ROLE = 0x70681eddbe06fae8379b18286b311d77aba3903f7caaacdad8a279edc9bf01dd;
+    bytes32 public constant RESUME_EXECUTION_ROLE = 0x6f25a60ae3c6f6d35322e95181c8564827784f1b05dd70ddf7e573f0d62fd84e;
+    bytes32 public constant CANCEL_EXECUTION_ROLE = 0x599ee266bc370c66d73339d3e75a02faef68267fcd93a47d7f174caa6026a691;
 
     string private constant ERROR_NO_SCRIPT = "DELAY_NO_SCRIPT";
     string private constant ERROR_SCRIPT_NOT_PAUSED = "DELAY_SCRIPT_NOT_PAUSED";
     string private constant ERROR_ACTION_NOT_ACTIVE = "DELAY_ACTION_NOT_ACTIVE";
+    string private constant ERROR_ACTION_CLOSED = "DELAY_ACTION_CLOSED";
+    string private constant ERROR_ACTION_CHALLENGED = "DELAY_ACTION_CHALLENGED";
     string private constant ERROR_CAN_NOT_EXECUTE = "DELAY_CAN_NOT_EXECUTE";
     string private constant ERROR_CAN_NOT_PAUSE = "DELAY_CAN_NOT_PAUSE";
-    string private constant ERROR_SCRIPT_EXECUTION_PASSED = "DELAY_SCRIPT_EXECUTION_PASSED";
+//    string private constant ERROR_SCRIPT_EXECUTION_PASSED = "DELAY_SCRIPT_EXECUTION_PASSED"; // TODO: No longer used, update in tests.
     string private constant ERROR_CAN_NOT_RESUME = "DELAY_CAN_NOT_RESUME";
     string private constant ERROR_CAN_NOT_FORWARD = "DELAY_CAN_NOT_FORWARD";
 
     enum DisputableStatus {
-        Active,                         // A delayed script that has been reported to the Agreement
-        Challenged,                     // A delayed script that is being challenged
-        Cancelled,                      // A delayed script that has been cancelled since it was refused after a dispute // TODO: Not needed if DelayedScript deleted when cancelled.
-        Closed                          // A delayed script that has been executed TODO: not needed if DelayedScript deleted once executed.
+        Active,              // A delayed script that has been reported to the Agreement
+        Challenged,          // A delayed script that is being challenged
+        Closed               // A delayed script that has had its agreement action closed
     }
 
     struct DelayedScript {
@@ -50,15 +63,16 @@ contract Delay is DisputableAragonApp, IForwarder {
     uint256 public delayedScriptsNewIndex = 0;
     mapping (uint256 => DelayedScript) public delayedScripts;
 
-    event DelayedScriptStored(uint256 scriptId);
-    event ExecutionDelaySet(uint64 executionDelay);
-    event ExecutedScript(uint256 scriptId);
-    event ExecutionPaused(uint256 scriptId);
-    event ExecutionResumed(uint256 scriptId);
-    event ExecutionCancelled(uint256 scriptId);
+    event ExecutionDelaySet(uint64 indexed executionDelay);
+    event DelayedScriptStored(uint256 indexed delayedScriptId, uint256 indexed actionId, bytes evmScript);
+    event ExecutionPaused(uint256 indexed delayedScriptId, uint256 indexed actionId);
+    event ExecutionResumed(uint256 indexed delayedScriptId, uint256 indexed actionId);
+    event ExecutionCancelled(uint256 indexed delayedScriptId, uint256 indexed actionId);
+    event AgreementActionClosed(uint256 indexed delayedScriptId, uint256 indexed actionId);
+    event ExecutedScript(uint256 indexed delayedScriptId, uint256 indexed actionId);
 
-    modifier scriptExists(uint256 _scriptId) {
-        require(delayedScripts[_scriptId].executionTime != 0, ERROR_NO_SCRIPT);
+    modifier scriptExists(DelayedScript storage _delayedScript) {
+        require(_scriptExists(_delayedScript), ERROR_NO_SCRIPT);
         _;
     }
 
@@ -81,16 +95,28 @@ contract Delay is DisputableAragonApp, IForwarder {
         emit ExecutionDelaySet(executionDelay);
     }
 
-    function getDisputableAction(uint256 _disputableActionId) external view returns (uint64 endDate, bool challenged, bool finished) {
-        return (0, false, false);
+    /**
+    * @dev IDisputable interface conformance
+    */
+    function getDisputableAction(uint256 _delayedScriptId) external view returns (uint64 endDate, bool challenged, bool finished) {
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+        endDate = delayedScript.executionTime;
+        challenged = delayedScript.disputableStatus == DisputableStatus.Challenged;
+        finished = !_scriptExists(delayedScript);
     }
 
-    function canChallenge(uint256 _disputableActionId) external view returns (bool) {
-        return true;
+    /**
+    * @dev IDisputable interface conformance
+    */
+    function canChallenge(uint256 _delayedScriptId) external view returns (bool) {
+        return _canPause(delayedScripts[_delayedScriptId]);
     }
 
-    function canClose(uint256 _disputableActionId) external view returns (bool) {
-        return false;
+    /**
+    * @dev IDisputable interface conformance
+    */
+    function canClose(uint256 _delayedScriptId) external view returns (bool) {
+        return _canExecute(delayedScripts[_delayedScriptId]);
     }
 
     /**
@@ -107,7 +133,9 @@ contract Delay is DisputableAragonApp, IForwarder {
     * @param _delayedScriptId The ID of the script execution to pause
     */
     function pauseExecution(uint256 _delayedScriptId) external auth(PAUSE_EXECUTION_ROLE) {
-        _pauseExecution(_delayedScriptId);
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+        _pauseExecution(delayedScript);
+        emit ExecutionPaused(_delayedScriptId, delayedScript.actionId);
     }
 
     /**
@@ -115,56 +143,85 @@ contract Delay is DisputableAragonApp, IForwarder {
     * @param _delayedScriptId The ID of the script execution to resume
     */
     function resumeExecution(uint256 _delayedScriptId) external auth(RESUME_EXECUTION_ROLE) {
-        DelayedScript memory delayedScript = delayedScripts[_delayedScriptId];
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
         require(delayedScript.disputableStatus == DisputableStatus.Active, ERROR_ACTION_NOT_ACTIVE);
 
-        _resumeExecution(_delayedScriptId);
+        _resumeExecution(delayedScript);
+        emit ExecutionResumed(_delayedScriptId, delayedScript.actionId);
     }
 
     /**
     * @notice Cancel script execution with ID `_delayedScriptId`
     * @param _delayedScriptId The ID of the script execution to cancel
     */
-    function cancelExecution(uint256 _delayedScriptId) external scriptExists(_delayedScriptId) auth(CANCEL_EXECUTION_ROLE) {
-        DelayedScript memory delayedScript = delayedScripts[_delayedScriptId];
-        require(delayedScript.disputableStatus == DisputableStatus.Active, ERROR_ACTION_NOT_ACTIVE);
+    function cancelExecution(uint256 _delayedScriptId)
+        external
+        nonReentrant
+        auth(CANCEL_EXECUTION_ROLE)
+    {
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+        require(_scriptExists(delayedScript), ERROR_NO_SCRIPT);
+        require(delayedScript.disputableStatus != DisputableStatus.Challenged, ERROR_ACTION_CHALLENGED);
 
-        _cancelExecution(_delayedScriptId);
-        _closeAgreementAction(delayedScripts[_delayedScriptId].actionId);
+        _closeAgreementAction(delayedScript.actionId);
+
+        emit ExecutionCancelled(_delayedScriptId, delayedScript.actionId);
+        _deleteDelayedScript(_delayedScriptId);
     }
 
     /**
     * @notice Execute the script with ID `_delayedScriptId`
     * @param _delayedScriptId The ID of the script to execute
     */
-    function execute(uint256 _delayedScriptId) external {
-        require(canExecute(_delayedScriptId), ERROR_CAN_NOT_EXECUTE);
-
-        DelayedScript memory delayedScript = delayedScripts[_delayedScriptId];
-        delete delayedScripts[_delayedScriptId];
+    function execute(uint256 _delayedScriptId) external nonReentrant {
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+        require(_canExecute(delayedScript), ERROR_CAN_NOT_EXECUTE);
 
         runScript(delayedScript.evmCallScript, new bytes(0), new address[](0));
-        emit ExecutedScript(_delayedScriptId);
+
+        if (delayedScript.disputableStatus != DisputableStatus.Closed) {
+            _closeAgreementAction(delayedScript.actionId);
+        }
+
+        emit ExecutedScript(_delayedScriptId, delayedScript.actionId);
+        _deleteDelayedScript(_delayedScriptId);
+    }
+
+    /**
+    * @notice Close agreement action with ID `_delayedScriptId`
+    * @param _delayedScriptId The ID of the script to close the agreement action of
+    */
+    function closeAgreementAction(uint256 _delayedScriptId) external {
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+
+        require(_canExecute(delayedScript), ERROR_CAN_NOT_EXECUTE);
+        require(delayedScript.disputableStatus != DisputableStatus.Closed, ERROR_ACTION_CLOSED);
+
         _closeAgreementAction(delayedScript.actionId);
+        emit AgreementActionClosed(_delayedScriptId, delayedScript.actionId);
+
+        delayedScript.disputableStatus = DisputableStatus.Closed;
     }
 
     /**
     * @notice Return whether a script with ID #`_scriptId` can be executed
-    * @param _scriptId The ID of the script to execute
+    * @param _delayedScriptId The ID of the script to execute
     */
-    function canExecute(uint256 _scriptId) public view returns (bool) {
-        bool withinExecutionWindow = getTimestamp64() > delayedScripts[_scriptId].executionTime;
-        bool isUnpaused = !_isExecutionPaused(_scriptId);
-
-        return withinExecutionWindow && isUnpaused; // TODO: && _canProceed(_scriptId);
+    function canExecute(uint256 _delayedScriptId) public view returns (bool) {
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+        return _canExecute(delayedScript);
     }
 
+    /**
+    * @dev IForwarder interface conformance
+    */
     function canForward(address _sender, bytes) public view returns (bool) {
         return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
     }
 
     /**
     * @notice Delays execution for `@transformTime(self.executionDelay(): uint)`
+    * @dev IForwarder interface conformance
     * @param _evmCallScript The script that can be executed after a delay
     */
     function forward(bytes _evmCallScript) public {
@@ -173,48 +230,45 @@ contract Delay is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @dev Challenge script execution
+    * @dev Challenge script execution, IDisputable interface conformance
     * @param _delayedScriptId The ID of the script execution to challenge
     */
     function _onDisputableActionChallenged(uint256 _delayedScriptId, uint256 /* _challengeId */, address /* _challenger */) internal {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
         delayedScript.disputableStatus = DisputableStatus.Challenged;
-        _pauseExecution(_delayedScriptId);
+        _pauseExecution(delayedScript);
+        emit ExecutionPaused(_delayedScriptId, delayedScript.actionId);
     }
 
     /**
-    * @dev Allow script execution
+    * @dev Allow script execution, IDisputable interface conformance
     * @param _delayedScriptId The ID of the script execution to allow
     */
     function _onDisputableActionAllowed(uint256 _delayedScriptId) internal {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
         delayedScript.disputableStatus = DisputableStatus.Active;
-        _resumeExecution(_delayedScriptId);
+        _resumeExecution(delayedScript);
+        emit ExecutionResumed(_delayedScriptId, delayedScript.actionId);
     }
 
     /**
-    * @dev Reject script execution
+    * @dev Reject script execution, IDisputable interface conformance
     * @param _delayedScriptId The ID of the script execution to reject
     */
     function _onDisputableActionRejected(uint256 _delayedScriptId) internal {
-        // TODO: Not needed if we delete the script.
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
-        delayedScript.disputableStatus = DisputableStatus.Cancelled;
+        require(_isExecutionPaused(delayedScript), ERROR_SCRIPT_NOT_PAUSED);
 
-        require(_isExecutionPaused(_delayedScriptId), ERROR_SCRIPT_NOT_PAUSED);
-        _cancelExecution(_delayedScriptId);
+        emit ExecutionCancelled(_delayedScriptId, delayedScript.actionId);
+        _deleteDelayedScript(_delayedScriptId);
     }
 
     /**
-    * @dev Void script execution
+    * @dev Void script execution, IDisputable interface conformance
     * @param _delayedScriptId The ID of the script execution to void
     */
     function _onDisputableActionVoided(uint256 _delayedScriptId) internal {
         _onDisputableActionAllowed(_delayedScriptId);
-    }
-
-    function _isExecutionPaused(uint256 _scriptId) internal view scriptExists(_scriptId) returns (bool) {
-        return delayedScripts[_scriptId].pausedAt != 0;
     }
 
     function _delayExecution(bytes _context, bytes _evmCallScript) internal returns (uint256) {
@@ -224,34 +278,47 @@ contract Delay is DisputableAragonApp, IForwarder {
         uint256 actionId = _newAgreementAction(delayedScriptIndex, _context, msg.sender);
         delayedScripts[delayedScriptIndex] = DelayedScript(getTimestamp64().add(executionDelay), 0, _evmCallScript, actionId, DisputableStatus.Active);
 
-        emit DelayedScriptStored(delayedScriptIndex);
+        emit DelayedScriptStored(delayedScriptIndex, actionId, _evmCallScript);
         return delayedScriptIndex;
     }
 
-    function _pauseExecution(uint256 _delayedScriptId) internal {
-        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
-        require(!_isExecutionPaused(_delayedScriptId), ERROR_CAN_NOT_PAUSE);
-        require(getTimestamp64() < delayedScript.executionTime, ERROR_SCRIPT_EXECUTION_PASSED);
+    function _pauseExecution(DelayedScript storage _delayedScript) internal {
+        require(_canPause(_delayedScript), ERROR_CAN_NOT_PAUSE);
 
-        delayedScript.pausedAt = getTimestamp64();
-
-        emit ExecutionPaused(_delayedScriptId);
+        _delayedScript.pausedAt = getTimestamp64();
     }
 
-    function _resumeExecution(uint256 _delayedScriptId) internal {
-        require(_isExecutionPaused(_delayedScriptId), ERROR_CAN_NOT_RESUME);
-        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+    function _resumeExecution(DelayedScript storage _delayedScript) internal {
+        require(_isExecutionPaused(_delayedScript), ERROR_CAN_NOT_RESUME);
 
-        uint64 timePaused = getTimestamp64().sub(delayedScript.pausedAt);
-        delayedScript.executionTime = delayedScript.executionTime.add(timePaused);
-        delayedScript.pausedAt = 0;
-
-        emit ExecutionResumed(_delayedScriptId);
+        uint64 timePaused = getTimestamp64().sub(_delayedScript.pausedAt);
+        _delayedScript.executionTime = _delayedScript.executionTime.add(timePaused);
+        _delayedScript.pausedAt = 0;
     }
 
-    function _cancelExecution(uint256 _delayedScriptId) internal {
+    function _deleteDelayedScript(uint256 _delayedScriptId) internal {
         delete delayedScripts[_delayedScriptId];
+    }
 
-        emit ExecutionCancelled(_delayedScriptId);
+    function _canPause(DelayedScript storage _delayedScript) internal view returns (bool) {
+        bool notPaused = !_isExecutionPaused(_delayedScript);
+        bool outsideExecutionWindow = getTimestamp64() < _delayedScript.executionTime;
+
+        return notPaused && outsideExecutionWindow;
+    }
+
+    function _canExecute(DelayedScript storage _delayedScript) internal view returns (bool) {
+        bool withinExecutionWindow = getTimestamp64() > _delayedScript.executionTime;
+        bool notPaused = !_isExecutionPaused(_delayedScript);
+
+        return withinExecutionWindow && notPaused;
+    }
+
+    function _isExecutionPaused(DelayedScript storage _delayedScript) internal view scriptExists(_delayedScript) returns (bool) {
+        return _delayedScript.pausedAt != 0;
+    }
+
+    function _scriptExists(DelayedScript storage _delayedScript) internal view returns (bool) {
+        return _delayedScript.executionTime != 0;
     }
 }
