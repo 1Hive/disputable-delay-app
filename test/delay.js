@@ -1,18 +1,29 @@
 const Delay = artifacts.require('Delay')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
-const deployDAO = require('./helpers/deployDAO')
-const { deployedContract, assertRevert, timeTravel, getLog } = require('./helpers/helpers')
+// TODO: Remove this helpers file if possible.
+const { timeTravel } = require('./helpers/helpers')
+const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
 const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-helpers/events')
 const { hash: nameHash } = require('eth-ens-namehash')
 
+const deployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
+
+const ONE_DAY = 60 * 60 * 24
+
 contract('Delay', ([rootAccount]) => {
-  let delayBase, delay
-  let SET_DELAY_ROLE, DELAY_EXECUTION_ROLE, PAUSE_EXECUTION_ROLE, RESUME_EXECUTION_ROLE, CANCEL_EXECUTION_ROLE
-  let dao, acl
+  let agreement, collateralToken, delayBase, delay
+  let SET_DELAY_ROLE, DELAY_EXECUTION_ROLE, PAUSE_EXECUTION_ROLE, RESUME_EXECUTION_ROLE,
+    CANCEL_EXECUTION_ROLE, SET_AGREEMENT_ROLE
 
   before('deploy base apps', async () => {
     delayBase = await Delay.new()
+    agreement = await deployer.deployAndInitializeWrapper({ rootAccount })
+    collateralToken = await deployer.deployCollateralToken()
+    await agreement.sign(rootAccount)
+
+    SET_AGREEMENT_ROLE = await delayBase.SET_AGREEMENT_ROLE()
     SET_DELAY_ROLE = await delayBase.SET_DELAY_ROLE()
     DELAY_EXECUTION_ROLE = await delayBase.DELAY_EXECUTION_ROLE()
     PAUSE_EXECUTION_ROLE = await delayBase.PAUSE_EXECUTION_ROLE()
@@ -21,25 +32,15 @@ contract('Delay', ([rootAccount]) => {
   })
 
   beforeEach('deploy dao and delay', async () => {
-    const daoDeployment = await deployDAO(rootAccount)
-    dao = daoDeployment.dao
-    acl = daoDeployment.acl
+    const newDelayAppReceipt =
+      await deployer.dao.newAppInstance(nameHash('delay.aragonpm.eth'), delayBase.address, '0x', false, {from: rootAccount,})
+    delay = await Delay.at(getNewProxyAddress(newDelayAppReceipt))
 
-    const newDelayAppReceipt = await dao.newAppInstance(
-      nameHash('delay.aragonpm.test'),
-      delayBase.address,
-      '0x',
-      false,
-      {
-        from: rootAccount,
-      }
-    )
-    delay = await Delay.at(deployedContract(newDelayAppReceipt))
-
-    await acl.createPermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE, rootAccount)
-    await acl.createPermission(rootAccount, delay.address, PAUSE_EXECUTION_ROLE, rootAccount)
-    await acl.createPermission(rootAccount, delay.address, RESUME_EXECUTION_ROLE, rootAccount)
-    await acl.createPermission(rootAccount, delay.address, CANCEL_EXECUTION_ROLE, rootAccount)
+    await deployer.acl.createPermission(agreement.address, delay.address, SET_AGREEMENT_ROLE, rootAccount)
+    await deployer.acl.createPermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE, rootAccount)
+    await deployer.acl.createPermission(rootAccount, delay.address, PAUSE_EXECUTION_ROLE, rootAccount)
+    await deployer.acl.createPermission(rootAccount, delay.address, RESUME_EXECUTION_ROLE, rootAccount)
+    await deployer.acl.createPermission(rootAccount, delay.address, CANCEL_EXECUTION_ROLE, rootAccount)
   })
 
   describe('initialize(uint256 _executionDelay)', () => {
@@ -47,6 +48,7 @@ contract('Delay', ([rootAccount]) => {
 
     beforeEach(async () => {
       await delay.initialize(INITIAL_DELAY)
+      await agreement.register({ disputable: delay, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: ONE_DAY, from: rootAccount })
     })
 
     it('sets the initial delay correctly and initializes', async () => {
@@ -62,7 +64,7 @@ contract('Delay', ([rootAccount]) => {
 
     describe('setExecutionDelay(uint256 _executionDelay)', () => {
       it('sets the execution delay correctly', async () => {
-        await acl.createPermission(rootAccount, delay.address, SET_DELAY_ROLE, rootAccount)
+        await deployer.acl.createPermission(rootAccount, delay.address, SET_DELAY_ROLE, rootAccount)
         const expectedExecutionDelay = 20
 
         await delay.setExecutionDelay(expectedExecutionDelay)
@@ -78,7 +80,7 @@ contract('Delay', ([rootAccount]) => {
       })
 
       it('returns false when permission has been revoked', async () => {
-        await acl.revokePermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE)
+        await deployer.acl.revokePermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE)
         assert.isFalse(await delay.canForward(rootAccount, '0x'))
       })
     })
@@ -97,7 +99,7 @@ contract('Delay', ([rootAccount]) => {
 
       describe('delayExecution(bytes _evmCallScript)', () => {
         beforeEach(async () => {
-          await delay.delayExecution(script)
+          await delay.delayExecution("0x", script)
         })
 
         it('stores delayed execution script and updates new script index', async () => {
@@ -150,7 +152,7 @@ contract('Delay', ([rootAccount]) => {
         })
 
         it('reverts when permission revoked', async () => {
-          await acl.revokePermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE)
+          await deployer.acl.revokePermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE)
 
           const forwardReceipt = delay.forward(script)
 
@@ -182,7 +184,7 @@ contract('Delay', ([rootAccount]) => {
 
           it('reverts when pausing script past execution time', async () => {
             await timeTravel(web3)(INITIAL_DELAY)
-            await assertRevert(delay.pauseExecution(0), 'DELAY_SCRIPT_EXECUTION_PASSED')
+            await assertRevert(delay.pauseExecution(0), 'DELAY_CAN_NOT_PAUSE')
           })
         })
 
@@ -295,11 +297,12 @@ contract('Delay', ([rootAccount]) => {
             }
 
             const reenteringScript = encodeCallScript([action])
-            const delayReceipt = await delay.delayExecution(reenteringScript)
-            const scriptId = getLog(delayReceipt, 'DelayedScriptStored', 'scriptId')
+            const delayReceipt = await delay.delayExecution("0x", reenteringScript)
+
+            const scriptId = getEventArgument(delayReceipt, 'DelayedScriptStored', 'delayedScriptId')
 
             await timeTravel(web3)(INITIAL_DELAY + 3)
-            await assertRevert(delay.execute(scriptId), 'DELAY_NO_SCRIPT')
+            await assertRevert(delay.execute(scriptId), 'REENTRANCY_REENTRANT_CALL')
           })
         })
       })
@@ -307,16 +310,27 @@ contract('Delay', ([rootAccount]) => {
   })
 
   describe('app not initialized', async () => {
+    let script
+
+    beforeEach(async () => {
+      const executionTarget = await ExecutionTarget.new()
+      const action = {
+        to: executionTarget.address,
+        calldata: executionTarget.contract.methods.execute().encodeABI(),
+      }
+      script = encodeCallScript([action])
+    })
+
     it('reverts on setting execution delay', async () => {
-      await assertRevert(delay.setExecutionDelay())
+      await assertRevert(delay.setExecutionDelay(10), "APP_AUTH_FAILED")
     })
 
     it('reverts on creating delay execution script (delayExecution)', async () => {
-      await assertRevert(delay.delayExecution())
+      await assertRevert(delay.delayExecution("0x", script), "APP_AUTH_FAILED")
     })
 
     it('reverts on creating delay execution script (forward)', async () => {
-      await assertRevert(delay.forward())
+      await assertRevert(delay.forward(script), "DELAY_CAN_NOT_FORWARD")
     })
   })
 })

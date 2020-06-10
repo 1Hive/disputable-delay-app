@@ -41,7 +41,6 @@ contract Delay is DisputableAragonApp, IForwarder {
     string private constant ERROR_ACTION_CHALLENGED = "DELAY_ACTION_CHALLENGED";
     string private constant ERROR_CAN_NOT_EXECUTE = "DELAY_CAN_NOT_EXECUTE";
     string private constant ERROR_CAN_NOT_PAUSE = "DELAY_CAN_NOT_PAUSE";
-//    string private constant ERROR_SCRIPT_EXECUTION_PASSED = "DELAY_SCRIPT_EXECUTION_PASSED"; // TODO: No longer used, update in tests.
     string private constant ERROR_CAN_NOT_RESUME = "DELAY_CAN_NOT_RESUME";
     string private constant ERROR_CAN_NOT_FORWARD = "DELAY_CAN_NOT_FORWARD";
 
@@ -118,7 +117,8 @@ contract Delay is DisputableAragonApp, IForwarder {
     * @dev IDisputable interface conformance
     */
     function canClose(uint256 _delayedScriptId) external view returns (bool) {
-        return _canExecute(delayedScripts[_delayedScriptId]);
+        // TODO: Fix this, use if statement or similar.
+        return _canExecute(delayedScripts[_delayedScriptId]) || _scriptExists(delayedScripts[_delayedScriptId]);
     }
 
     /**
@@ -156,8 +156,7 @@ contract Delay is DisputableAragonApp, IForwarder {
     * @notice Cancel script execution with ID `_delayedScriptId`
     * @param _delayedScriptId The ID of the script execution to cancel
     */
-    function cancelExecution(uint256 _delayedScriptId) external nonReentrant auth(CANCEL_EXECUTION_ROLE)
-    {
+    function cancelExecution(uint256 _delayedScriptId) external nonReentrant auth(CANCEL_EXECUTION_ROLE) {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
         require(_scriptExists(delayedScript), ERROR_NO_SCRIPT);
         require(delayedScript.disputableStatus != DisputableStatus.Challenged, ERROR_ACTION_CHALLENGED);
@@ -209,6 +208,13 @@ contract Delay is DisputableAragonApp, IForwarder {
     function canExecute(uint256 _delayedScriptId) public view returns (bool) {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
         return _canExecute(delayedScript);
+    }
+
+    /**
+    * @dev IForwarder interface conformance
+    */
+    function isForwarder() external pure returns (bool) {
+        return true;
     }
 
     /**

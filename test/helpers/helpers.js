@@ -1,24 +1,5 @@
 const Promise = require('bluebird')
 
-const assertRevert = async (receiptPromise, reason) => {
-    try {
-        await receiptPromise
-    } catch (error) {
-        if (reason) {
-            assert.include(error.message, reason, 'Incorrect revert reason')
-        }
-        return
-    }
-    assert.fail(`Expected a revert for reason: ${reason}`)
-}
-
-const getLog = (receipt, logName, argName) => {
-    const log = receipt.logs.find(({event}) => event === logName)
-    return log ? log.args[argName] : null
-}
-
-const deployedContract = receipt => getLog(receipt, 'NewAppProxy', 'proxy')
-
 const timeTravel = web3 => s => {
     return new Promise((resolve, reject) => {
         web3.currentProvider.send({
@@ -34,8 +15,5 @@ const timeTravel = web3 => s => {
 }
 
 module.exports = {
-    assertRevert,
-    getLog,
-    deployedContract,
     timeTravel
 }
