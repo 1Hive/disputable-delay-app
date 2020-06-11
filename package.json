@@ -30,7 +30,7 @@
     "devchain": "buidler node",
     "build": "cd app && npm run build",
     "lint": "buidler check && echo 'Lint complete.'",
-    "test": "buidler test --network buidlerevm",
+    "test": "TEST=true buidler test --network buidlerevm",
     "test:gas": "GAS_REPORTER=true npm run test",
     "coverage": "SOLIDITY_COVERAGE=true npm run test",
     "apm:publish:major": "buidler publish major",
