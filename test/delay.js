@@ -11,11 +11,12 @@ const deployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(w
 
 const ONE_DAY = 60 * 60 * 24
 const ANY_ADDR = '0xffffffffffffffffffffffffffffffffffffffff'
-const toBn = (number) => web3.utils.toBN(number)
 
 const DELAYED_SCRIPT_STATUS = {
-  ACTIVE: 0,              // A delayed script that has been reported to the Agreement
-  PAUSED: 1               // A delayed script that is being challenged
+  ACTIVE: 0,
+  PAUSED: 1,
+  CANCELLED: 2,
+  EXECUTED: 3
 }
 
 contract('Delay', ([rootAccount]) => {
@@ -45,17 +46,17 @@ contract('Delay', ([rootAccount]) => {
   })
 
   describe('initialize(uint256 _executionDelay)', () => {
-    const INITIAL_DELAY = 100 // seconds
+    const DELAY_LENGTH = 1000 // seconds
 
     beforeEach(async () => {
-      await delay.initialize(INITIAL_DELAY)
-      await agreement.register({ disputable: delay, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: INITIAL_DELAY, from: rootAccount })
+      await delay.initialize(DELAY_LENGTH)
+      await agreement.register({ disputable: delay, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: DELAY_LENGTH, from: rootAccount })
     })
 
     it('sets the initial delay correctly and initializes', async () => {
       const actualExecutionDelay = await delay.executionDelay()
       const hasInitialized = await delay.hasInitialized()
-      assert.equal(actualExecutionDelay, INITIAL_DELAY)
+      assert.equal(actualExecutionDelay, DELAY_LENGTH)
       assert.isTrue(hasInitialized)
     })
 
@@ -103,7 +104,7 @@ contract('Delay', ([rootAccount]) => {
         it('stores delayed execution script and updates new script index', async () => {
           const timestamp = await delay.getTimestampPublic()
 
-          const expectedExecutionFromTime = timestamp.toNumber() + INITIAL_DELAY
+          const expectedExecutionFromTime = timestamp.toNumber() + DELAY_LENGTH
           const {
             executionFromTime: actualExecutionFromTime,
             pausedAt: actualPausedAt,
@@ -112,7 +113,7 @@ contract('Delay', ([rootAccount]) => {
           } = await delay.delayedScripts(delayedScriptId)
           const actualNewScriptIndex = await delay.delayedScriptsNewIndex()
 
-          assert.closeTo(actualExecutionFromTime.toNumber(), expectedExecutionFromTime, 5)
+          assert.closeTo(actualExecutionFromTime.toNumber(), expectedExecutionFromTime, 3)
           assert.equal(actualCallScript, script)
           assert.equal(actualPausedAt, 0)
           assert.equal(actualNewScriptIndex, 1)
@@ -121,22 +122,19 @@ contract('Delay', ([rootAccount]) => {
 
         describe('getDisputableAction(uint256 _delayedScriptId)', () => {
           it('returns expected values for unexecuted script', async () => {
-            const expectedEndDate = delayCreatedTimestamp.add(toBn(INITIAL_DELAY))
-
             const { endDate, challenged, finished } = await delay.getDisputableAction(delayedScriptId)
 
-            assert.closeTo(endDate.toNumber(), expectedEndDate.toNumber(), 5)
+            assert.closeTo(endDate.toNumber(), delayCreatedTimestamp.toNumber() + DELAY_LENGTH, 3)
             assert.isFalse(challenged)
             assert.isFalse(finished)
           })
 
           it('returns expected values for unexecuted challenged script', async () => {
             await agreement.challenge({ actionId })
-            const expectedEndDate = delayCreatedTimestamp.add(toBn(INITIAL_DELAY))
 
             const { endDate, challenged, finished } = await delay.getDisputableAction(delayedScriptId)
 
-            assert.closeTo(endDate.toNumber(), expectedEndDate.toNumber(), 5)
+            assert.closeTo(endDate.toNumber(), delayCreatedTimestamp.toNumber() + DELAY_LENGTH, 3)
             assert.isTrue(challenged)
             assert.isFalse(finished)
           })
@@ -148,7 +146,7 @@ contract('Delay', ([rootAccount]) => {
 
             const { endDate, challenged, finished } = await delay.getDisputableAction(delayedScriptId)
 
-            assert.equal(endDate.toNumber(), 0)
+            assert.closeTo(endDate.toNumber(), delayCreatedTimestamp.toNumber() + DELAY_LENGTH, 3)
             assert.isFalse(challenged)
             assert.isTrue(finished)
           })
@@ -167,7 +165,7 @@ contract('Delay', ([rootAccount]) => {
           })
 
           it('returns false when script is executable', async () => {
-            await delay.mockIncreaseTime(INITIAL_DELAY)
+            await delay.mockIncreaseTime(DELAY_LENGTH)
             const canChallenge = await delay.canChallenge(delayedScriptId)
             assert.isFalse(canChallenge)
           })
@@ -180,21 +178,20 @@ contract('Delay', ([rootAccount]) => {
           })
 
           it('returns true when script is executable', async () => {
-            await delay.mockIncreaseTime(INITIAL_DELAY)
+            await delay.mockIncreaseTime(DELAY_LENGTH)
             const canClose = await delay.canClose(delayedScriptId)
             assert.isTrue(canClose)
           })
         })
 
         describe('_onDisputableActionChallenged(uint256 _delayedScriptId)', () => {
-
           it('pauses execution script', async () => {
             const timestamp = await delay.getTimestampPublic()
 
             await agreement.challenge({ actionId })
 
             const { pausedAt, delayedScriptStatus } = await delay.delayedScripts(delayedScriptId)
-            assert.closeTo(pausedAt.toNumber(), timestamp.toNumber(), 5) // Is not exact due to agreement.challenge() executing multiple transactions
+            assert.closeTo(pausedAt.toNumber(), timestamp.toNumber(), 3)
             assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.PAUSED)
           })
 
@@ -209,8 +206,21 @@ contract('Delay', ([rootAccount]) => {
           })
 
           it('reverts when challenging script past execution time', async () => {
-            await delay.mockIncreaseTime(INITIAL_DELAY)
+            await delay.mockIncreaseTime(DELAY_LENGTH)
             await assertRevert(agreement.challenge({ actionId }), 'AGR_CANNOT_CHALLENGE_ACTION')
+          })
+
+          it('allows multiple challenges', async () => {
+            await agreement.challenge({ actionId })
+            await agreement.dispute({ actionId })
+            await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
+            const timestamp = await delay.getTimestampPublic()
+
+            await agreement.challenge({ actionId })
+
+            const { pausedAt, delayedScriptStatus } = await delay.delayedScripts(delayedScriptId)
+            assert.closeTo(pausedAt.toNumber(), timestamp.toNumber(), 3) // Is not exact due to agreement.challenge() executing multiple transactions
+            assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.PAUSED)
           })
         })
 
@@ -224,7 +234,11 @@ contract('Delay', ([rootAccount]) => {
             await delay.mockIncreaseTime(timePaused)
             await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
 
-            const { executionFromTime: actualExecutionFromTime, pausedAt: actualPausedAt, delayedScriptStatus } = await delay.delayedScripts(delayedScriptId)
+            const {
+              executionFromTime: actualExecutionFromTime,
+              pausedAt: actualPausedAt,
+              delayedScriptStatus
+            } = await delay.delayedScripts(delayedScriptId)
             assert.equal(actualPausedAt, 0)
             assert.closeTo(actualExecutionFromTime.toNumber(), oldExecutionFromTime.toNumber() + timePaused, 5)
             assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.ACTIVE)
@@ -251,13 +265,13 @@ contract('Delay', ([rootAccount]) => {
 
             const {
               executionFromTime: actualExecutionFromTime,
-              pausedAt: actualPausedAt,
               evmCallScript: actualCallScript,
+              delayedScriptStatus
             } = await delay.delayedScripts(delayedScriptId)
 
-            assert.equal(actualExecutionFromTime, 0)
-            assert.equal(actualCallScript, null)
-            assert.equal(actualPausedAt, 0)
+            assert.closeTo(actualExecutionFromTime.toNumber(), delayCreatedTimestamp.toNumber() + DELAY_LENGTH, 3)
+            assert.equal(actualCallScript, script)
+            assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.CANCELLED)
           })
 
           it('reverts when attempting to allow after being rejected', async () => {
@@ -287,7 +301,11 @@ contract('Delay', ([rootAccount]) => {
             await delay.mockIncreaseTime(timePaused)
             await agreement.executeRuling({ actionId, ruling: RULINGS.REFUSED })
 
-            const { executionFromTime: actualExecutionFromTime, pausedAt: actualPausedAt, delayedScriptStatus } = await delay.delayedScripts(delayedScriptId)
+            const {
+              executionFromTime: actualExecutionFromTime,
+              pausedAt: actualPausedAt,
+              delayedScriptStatus
+            } = await delay.delayedScripts(delayedScriptId)
             assert.equal(actualPausedAt, 0)
             assert.closeTo(actualExecutionFromTime.toNumber(), oldExecutionFromTime.toNumber() + timePaused, 5)
             assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.ACTIVE)
@@ -295,20 +313,21 @@ contract('Delay', ([rootAccount]) => {
         })
 
         describe('execute(uint256 _delayedScriptId)', () => {
-          it('executes the script after the delay has elapsed and deletes script', async () => {
-            await delay.mockIncreaseTime(INITIAL_DELAY)
+          it('executes the script after the delay has elapsed', async () => {
+            await delay.mockIncreaseTime(DELAY_LENGTH)
 
             await delay.execute(delayedScriptId)
             const actualExecutionCounter = await executionTarget.counter()
             const {
               executionFromTime: actualExecutionFromTime,
-              pausedAt: actualPausedAt,
               evmCallScript: actualCallScript,
+              delayedScriptStatus
             } = await delay.delayedScripts(delayedScriptId)
+
             assert.equal(actualExecutionCounter, 1)
-            assert.equal(actualExecutionFromTime, 0)
-            assert.equal(actualCallScript, null)
-            assert.equal(actualPausedAt, 0)
+            assert.closeTo(actualExecutionFromTime.toNumber(), delayCreatedTimestamp.toNumber() + DELAY_LENGTH, 3)
+            assert.equal(actualCallScript, script)
+            assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.EXECUTED)
           })
 
           it('executes the script after execution is resumed', async () => {
@@ -316,13 +335,13 @@ contract('Delay', ([rootAccount]) => {
             await agreement.dispute({ actionId })
             await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
 
-            await delay.mockIncreaseTime(INITIAL_DELAY)
+            await delay.mockIncreaseTime(DELAY_LENGTH)
             await delay.execute(delayedScriptId)
           })
 
           it('reverts when script does not exist', async () => {
             const incorrectScriptId = 99
-            await assertRevert(delay.execute(incorrectScriptId), 'DELAY_NO_SCRIPT')
+            await assertRevert(delay.execute(incorrectScriptId), 'DELAY_CAN_NOT_EXECUTE')
           })
 
           it('reverts when executing script before execution time', async () => {
@@ -331,7 +350,7 @@ contract('Delay', ([rootAccount]) => {
 
           it('reverts when executing paused script', async () => {
             await agreement.challenge({ actionId })
-            await delay.mockIncreaseTime(INITIAL_DELAY)
+            await delay.mockIncreaseTime(DELAY_LENGTH)
             await assertRevert(delay.execute(delayedScriptId), 'DELAY_CAN_NOT_EXECUTE')
           })
 
@@ -339,9 +358,9 @@ contract('Delay', ([rootAccount]) => {
             await agreement.challenge({ actionId })
             await agreement.dispute({ actionId })
             await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
-            await delay.mockIncreaseTime(INITIAL_DELAY)
+            await delay.mockIncreaseTime(DELAY_LENGTH)
 
-            await assertRevert(delay.execute(delayedScriptId), 'DELAY_NO_SCRIPT')
+            await assertRevert(delay.execute(delayedScriptId), 'DELAY_CAN_NOT_EXECUTE')
           })
 
           it('reverts when evmScript reenters delay contract, attempting to execute same script twice', async () => {
@@ -354,13 +373,13 @@ contract('Delay', ([rootAccount]) => {
             const delayReceipt = await delay.delayExecution("0x", reenteringScript)
 
             const scriptId = getEventArgument(delayReceipt, 'DelayedScriptStored', 'delayedScriptId')
-            await delay.mockIncreaseTime(INITIAL_DELAY)
+            await delay.mockIncreaseTime(DELAY_LENGTH)
             await assertRevert(delay.execute(scriptId), 'REENTRANCY_REENTRANT_CALL')
           })
 
           it('closes the agreement anction', async () => {
             const { closed: closedBefore } = await agreement.getAction(actionId)
-            await delay.mockIncreaseTime(INITIAL_DELAY)
+            await delay.mockIncreaseTime(DELAY_LENGTH)
 
             await delay.execute(delayedScriptId)
 
@@ -373,7 +392,7 @@ contract('Delay', ([rootAccount]) => {
         describe('closeAgreementAction(uint256 _delayedScriptId)', () => {
           it('closes the agreement action', async () => {
             const { closed: closedBefore } = await agreement.getAction(actionId)
-            await delay.mockIncreaseTime(INITIAL_DELAY)
+            await delay.mockIncreaseTime(DELAY_LENGTH)
 
             await delay.closeAgreementAction(delayedScriptId)
 
@@ -387,14 +406,14 @@ contract('Delay', ([rootAccount]) => {
           })
 
           it('reverts when already closed', async () => {
-            await delay.mockIncreaseTime(INITIAL_DELAY)
+            await delay.mockIncreaseTime(DELAY_LENGTH)
             await delay.closeAgreementAction(delayedScriptId)
-            await assertRevert(delay.closeAgreementAction(delayedScriptId), "DELAY_ACTION_CLOSED")
+            await assertRevert(delay.closeAgreementAction(delayedScriptId), "AGR_CANNOT_CLOSE_ACTION")
           })
 
           describe('execute(uint256 _delayedScriptId)', () => {
             it('succeeds when action already closed', async () => {
-              await delay.mockIncreaseTime(INITIAL_DELAY)
+              await delay.mockIncreaseTime(DELAY_LENGTH)
               await delay.closeAgreementAction(delayedScriptId)
 
               await delay.execute(delayedScriptId)
@@ -402,13 +421,13 @@ contract('Delay', ([rootAccount]) => {
               const actualExecutionCounter = await executionTarget.counter()
               const {
                 executionFromTime: actualExecutionFromTime,
-                pausedAt: actualPausedAt,
                 evmCallScript: actualCallScript,
+                delayedScriptStatus
               } = await delay.delayedScripts(delayedScriptId)
               assert.equal(actualExecutionCounter, 1)
-              assert.equal(actualExecutionFromTime, 0)
-              assert.equal(actualCallScript, null)
-              assert.equal(actualPausedAt, 0)
+              assert.closeTo(actualExecutionFromTime.toNumber(), delayCreatedTimestamp.toNumber() + DELAY_LENGTH, 3)
+              assert.equal(actualCallScript, script)
+              assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.EXECUTED)
             })
           })
         })
