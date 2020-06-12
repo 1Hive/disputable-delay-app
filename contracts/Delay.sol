@@ -9,7 +9,7 @@ import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 /*
 TODO: Remove the below once UI is updated.
 Possible states:
-Normal
+Active
 Paused (/challenged)
 Executable
 Closed (also Executable and Agreement action closed)
@@ -38,7 +38,7 @@ contract Delay is DisputableAragonApp, IForwarder {
     }
 
     struct DelayedScript {
-        uint64 executionTime;
+        uint64 executionFromTime;
         uint64 pausedAt;
         bytes evmCallScript;
         uint256 actionId;
@@ -88,7 +88,7 @@ contract Delay is DisputableAragonApp, IForwarder {
         external view returns (uint64 endDate, bool challenged, bool finished)
     {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
-        endDate = delayedScript.executionTime;
+        endDate = delayedScript.executionFromTime;
         challenged = delayedScript.delayedScriptStatus == DelayedScriptStatus.Paused;
         finished = !_scriptExists(delayedScript);
     }
@@ -114,6 +114,78 @@ contract Delay is DisputableAragonApp, IForwarder {
     */
     function delayExecution(bytes _context, bytes _evmCallScript) external auth(DELAY_EXECUTION_ROLE) returns (uint256) {
         return _delayExecution(_context, _evmCallScript);
+    }
+
+    /**
+    * @dev IForwarder interface conformance
+    */
+    function isForwarder() external pure returns (bool) {
+        return true;
+    }
+
+    /**
+    * @dev IForwarder interface conformance
+    */
+    function canForward(address _sender, bytes) public view returns (bool) {
+        return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
+    }
+
+    /**
+    * @notice Delays execution for `@transformTime(self.executionDelay(): uint)`
+    * @dev IForwarder interface conformance
+    * @param _evmCallScript The script that can be executed after a delay
+    */
+    function forward(bytes _evmCallScript) public {
+        require(canForward(msg.sender, _evmCallScript), ERROR_CAN_NOT_FORWARD);
+        _delayExecution(new bytes(0), _evmCallScript);
+    }
+
+    /**
+    * @dev Challenge script execution, IDisputable interface conformance
+    * @param _delayedScriptId The ID of the script execution to challenge
+    */
+    function _onDisputableActionChallenged(uint256 _delayedScriptId, uint256 /* _challengeId */, address /* _challenger */)
+        internal
+    {
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+        delayedScript.pausedAt = getTimestamp64();
+        delayedScript.delayedScriptStatus = DelayedScriptStatus.Paused;
+
+        emit ExecutionPaused(_delayedScriptId, delayedScript.actionId);
+    }
+
+    /**
+    * @dev Allow script execution, IDisputable interface conformance
+    * @param _delayedScriptId The ID of the script execution to allow
+    */
+    function _onDisputableActionAllowed(uint256 _delayedScriptId) internal {
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+        uint64 timePaused = getTimestamp64().sub(delayedScript.pausedAt);
+
+        delayedScript.executionFromTime = delayedScript.executionFromTime.add(timePaused);
+        delayedScript.pausedAt = 0;
+        delayedScript.delayedScriptStatus = DelayedScriptStatus.Active;
+
+        emit ExecutionResumed(_delayedScriptId, delayedScript.actionId);
+    }
+
+    /**
+    * @dev Reject script execution, IDisputable interface conformance
+    * @param _delayedScriptId The ID of the script execution to reject
+    */
+    function _onDisputableActionRejected(uint256 _delayedScriptId) internal {
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+
+        emit ExecutionCancelled(_delayedScriptId, delayedScript.actionId);
+        _deleteDelayedScript(_delayedScriptId);
+    }
+
+    /**
+    * @dev Void script execution, IDisputable interface conformance
+    * @param _delayedScriptId The ID of the script execution to void
+    */
+    function _onDisputableActionVoided(uint256 _delayedScriptId) internal {
+        _onDisputableActionAllowed(_delayedScriptId);
     }
 
     /**
@@ -158,75 +230,6 @@ contract Delay is DisputableAragonApp, IForwarder {
         return _canExecute(delayedScripts[_delayedScriptId]);
     }
 
-    /**
-    * @dev IForwarder interface conformance
-    */
-    function isForwarder() external pure returns (bool) {
-        return true;
-    }
-
-    /**
-    * @dev IForwarder interface conformance
-    */
-    function canForward(address _sender, bytes) public view returns (bool) {
-        return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
-    }
-
-    /**
-    * @notice Delays execution for `@transformTime(self.executionDelay(): uint)`
-    * @dev IForwarder interface conformance
-    * @param _evmCallScript The script that can be executed after a delay
-    */
-    function forward(bytes _evmCallScript) public {
-        require(canForward(msg.sender, _evmCallScript), ERROR_CAN_NOT_FORWARD);
-        _delayExecution(new bytes(0), _evmCallScript);
-    }
-
-    /**
-    * @dev Challenge script execution, IDisputable interface conformance
-    * @param _delayedScriptId The ID of the script execution to challenge
-    */
-    function _onDisputableActionChallenged(uint256 _delayedScriptId, uint256 /* _challengeId */, address /* _challenger */)
-        internal
-    {
-        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
-        delayedScript.pausedAt = getTimestamp64();
-        delayedScript.delayedScriptStatus = DelayedScriptStatus.Paused;
-        emit ExecutionPaused(_delayedScriptId, delayedScript.actionId);
-    }
-
-    /**
-    * @dev Allow script execution, IDisputable interface conformance
-    * @param _delayedScriptId The ID of the script execution to allow
-    */
-    function _onDisputableActionAllowed(uint256 _delayedScriptId) internal {
-        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
-        uint64 timePaused = getTimestamp64().sub(delayedScript.pausedAt);
-        delayedScript.executionTime = delayedScript.executionTime.add(timePaused);
-        delayedScript.pausedAt = 0;
-
-        delayedScript.delayedScriptStatus = DelayedScriptStatus.Active;
-        emit ExecutionResumed(_delayedScriptId, delayedScript.actionId);
-    }
-
-    /**
-    * @dev Reject script execution, IDisputable interface conformance
-    * @param _delayedScriptId The ID of the script execution to reject
-    */
-    function _onDisputableActionRejected(uint256 _delayedScriptId) internal {
-        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
-        emit ExecutionCancelled(_delayedScriptId, delayedScript.actionId);
-        _deleteDelayedScript(_delayedScriptId);
-    }
-
-    /**
-    * @dev Void script execution, IDisputable interface conformance
-    * @param _delayedScriptId The ID of the script execution to void
-    */
-    function _onDisputableActionVoided(uint256 _delayedScriptId) internal {
-        _onDisputableActionAllowed(_delayedScriptId);
-    }
-
     function _delayExecution(bytes _context, bytes _evmCallScript) internal returns (uint256) {
         uint256 delayedScriptIndex = delayedScriptsNewIndex;
         delayedScriptsNewIndex++;
@@ -245,14 +248,14 @@ contract Delay is DisputableAragonApp, IForwarder {
 
     function _canPause(DelayedScript storage _delayedScript) internal view scriptExists(_delayedScript) returns (bool) {
         bool notPaused = !_isExecutionPaused(_delayedScript);
-        bool outsideExecutionWindow = getTimestamp64() < _delayedScript.executionTime;
+        bool outsideExecutionWindow = getTimestamp64() < _delayedScript.executionFromTime;
 
         return notPaused && outsideExecutionWindow;
     }
 
     function _canExecute(DelayedScript storage _delayedScript) internal view scriptExists(_delayedScript) returns (bool) {
         bool notPaused = !_isExecutionPaused(_delayedScript);
-        bool withinExecutionWindow = getTimestamp64() > _delayedScript.executionTime;
+        bool withinExecutionWindow = getTimestamp64() > _delayedScript.executionFromTime;
 
         return notPaused && withinExecutionWindow;
     }
@@ -262,6 +265,6 @@ contract Delay is DisputableAragonApp, IForwarder {
     }
 
     function _scriptExists(DelayedScript storage _delayedScript) internal view returns (bool) {
-        return _delayedScript.executionTime != 0;
+        return _delayedScript.executionFromTime != 0;
     }
 }
