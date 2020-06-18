@@ -8,7 +8,6 @@ import DelayStatus from '../components/DelayStatus'
 import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
 
 import STATUS from '../delay-status-types'
-import { describePath } from '../lib/delay-utils'
 
 const DelayCard = React.memo(({ delay, selectDelay }) => {
   const {
@@ -32,7 +31,7 @@ const DelayCard = React.memo(({ delay, selectDelay }) => {
       </div>
       <DelayDescription
         prefix={<span css="font-weight: bold">#{delay.scriptId}: </span>}
-        description={describePath(delay.path)}
+        description={delay.executionDescription}
         disabled
         css={`
           overflow: hidden;

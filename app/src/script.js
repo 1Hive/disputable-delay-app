@@ -2,6 +2,7 @@ import 'core-js/stable'
 import 'regenerator-runtime/runtime'
 import { formatTime } from './lib/math-utils'
 import Aragon, { events } from '@aragon/api'
+import { describePath } from './lib/delay-utils'
 
 const app = new Aragon()
 
@@ -147,12 +148,13 @@ async function getDelayedScript(scriptId) {
 
   if (executionTime === '0') return {}
 
+  let description = ''
   let executionTargets = []
   let path = []
 
   try {
     path = (await app.describeScript(evmCallScript).toPromise()) || []
-
+    description = describePath(path)
     executionTargets = [...new Set(path.map(({ to }) => to))]
   } catch (error) {
     console.error('Error describing script', error)
@@ -160,6 +162,7 @@ async function getDelayedScript(scriptId) {
 
   return {
     scriptId,
+    executionDescription: description,
     executionTargets,
     executionTime: marshallDate(executionTime),
     pausedAt: marshallDate(pausedAt),
