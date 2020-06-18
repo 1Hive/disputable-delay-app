@@ -58,7 +58,7 @@ async function createStore() {
  ***********************/
 
 function initializeState() {
-  return async cachedState => {
+  return async (cachedState) => {
     const { executionDelay } = await getDelaySettings()
 
     executionDelay && app.identify(`Delay ${formatTime(executionDelay)}`)
@@ -98,7 +98,7 @@ async function newDelayedScript(state, { scriptId }, blockNumber, transactionHas
 
 async function updateDelayedScript(state, { scriptId }) {
   const { delayedScripts } = state
-  const index = delayedScripts.findIndex(script => script.scriptId === scriptId)
+  const index = delayedScripts.findIndex((script) => script.scriptId === scriptId)
 
   if (index < 0)
     return {
@@ -121,7 +121,7 @@ async function updateDelayedScript(state, { scriptId }) {
 
 function removeDelayedScript(state, { scriptId }) {
   const { delayedScripts } = state
-  const index = delayedScripts.findIndex(script => script.scriptId === scriptId)
+  const index = delayedScripts.findIndex((script) => script.scriptId === scriptId)
 
   const newDelayedScripts =
     index >= 0
@@ -147,7 +147,6 @@ async function getDelayedScript(scriptId) {
 
   if (executionTime === '0') return {}
 
-  let description = ''
   let executionTargets = []
   let path = []
 
@@ -155,27 +154,13 @@ async function getDelayedScript(scriptId) {
     path = (await app.describeScript(evmCallScript).toPromise()) || []
 
     executionTargets = [...new Set(path.map(({ to }) => to))]
-
-    // TODO: consider removing description as it can be rendered from the path in the frontend
-    description = path.length
-      ? path
-          .map(step => { 
-            const identifier = step.identifier ? ` (${step.identifier})` : ''
-            const app = step.name ? `${step.name}${identifier}` : `${step.to}`
-
-            return `${app}: ${step.description || 'No description'}`
-          })
-          .join('\n')
-      : ''
   } catch (error) {
     console.error('Error describing script', error)
-    description = 'Invalid script. The result cannot be executed.'
   }
 
   return {
     scriptId,
     executionTargets,
-    executionDescription: description,
     executionTime: marshallDate(executionTime),
     pausedAt: marshallDate(pausedAt),
     path,

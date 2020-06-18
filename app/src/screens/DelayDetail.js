@@ -19,6 +19,7 @@ import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBa
 
 import STATUS from '../delay-status-types'
 import { formatTime, toHours } from '../lib/math-utils'
+import { describePath } from '../lib/delay-utils'
 
 const DEFAULT_DESCRIPTION = 'No additional description provided.'
 
@@ -26,7 +27,7 @@ const DelayDetail = React.memo(({ delay, onBack, onDelayAction }) => {
   const theme = useTheme()
   const { layoutName } = useLayout()
 
-  const { creator, executionTargetData, executionDescription, path: executionPath } = delay
+  const { creator, executionTargetData, path: executionPath } = delay
 
   return (
     <>
@@ -86,7 +87,7 @@ const DelayDetail = React.memo(({ delay, onBack, onDelayAction }) => {
                         Array.isArray(executionPath) ? (
                           <DetailedDescription path={executionPath} />
                         ) : (
-                          executionDescription || DEFAULT_DESCRIPTION
+                          describePath(executionPath) || DEFAULT_DESCRIPTION
                         )
                       }
                     />

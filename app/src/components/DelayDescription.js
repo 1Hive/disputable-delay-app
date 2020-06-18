@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'
 import AutoLink from '../components/AutoLink'
 
 // Render a description associated to a delayed script.
-// Usually delay.executionDescription.
 const DelayDescription = React.memo(function DelayDescription({
   disabled,
   description,
