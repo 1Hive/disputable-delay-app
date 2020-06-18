@@ -8,13 +8,12 @@ import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 
 /*
 TODO: Remove the below once UI is updated.
-Possible states:
+Possible states displayed on UI:
 Active
 Paused (/challenged)
-Executable
-Closed (also Executable and Agreement action closed)
-Executed (also Closed, determined by searching for ID in ExecutedScript event)
-Cancelled (also Closed, determined by searching for ID in ExecutionCancelled event)
+Executable (using canExecute())
+Cancelled (by Agreements app)
+Executed
 */
 
 contract Delay is DisputableAragonApp, IForwarder {
@@ -28,8 +27,9 @@ contract Delay is DisputableAragonApp, IForwarder {
     bytes32 public constant DELAY_EXECUTION_ROLE = 0x68a7ca9b0904e026378fb888f3be95ada2a0c0b11f58c40530c1a383c0f99ce9;
 
     string private constant ERROR_NO_SCRIPT = "DELAY_NO_SCRIPT";
-    string private constant ERROR_CAN_NOT_EXECUTE = "DELAY_CAN_NOT_EXECUTE";
-    string private constant ERROR_CAN_NOT_FORWARD = "DELAY_CAN_NOT_FORWARD";
+    string private constant ERROR_CANNOT_FORWARD = "DELAY_CANNOT_FORWARD";
+    string private constant ERROR_CANNOT_EXECUTE = "DELAY_CANNOT_EXECUTE";
+    string private constant ERROR_CANNOT_CLOSE = "DELAY_CANNOT_CLOSE";
 
     enum DelayedScriptStatus {
         Active,              // A delayed script that has been reported to Agreements
@@ -41,9 +41,9 @@ contract Delay is DisputableAragonApp, IForwarder {
     struct DelayedScript {
         uint64 executionFromTime;
         uint64 pausedAt;
+        DelayedScriptStatus delayedScriptStatus;
         bytes evmCallScript;
         uint256 actionId;
-        DelayedScriptStatus delayedScriptStatus;
     }
 
     uint64 public executionDelay;
@@ -103,7 +103,7 @@ contract Delay is DisputableAragonApp, IForwarder {
     * @dev IDisputable interface conformance
     */
     function canClose(uint256 _delayedScriptId) external view returns (bool) {
-        return _canExecute(delayedScripts[_delayedScriptId]);
+        return _canClose(delayedScripts[_delayedScriptId]);
     }
 
     /**
@@ -135,7 +135,7 @@ contract Delay is DisputableAragonApp, IForwarder {
     * @param _evmCallScript The script that can be executed after a delay
     */
     function forward(bytes _evmCallScript) public {
-        require(canForward(msg.sender, _evmCallScript), ERROR_CAN_NOT_FORWARD);
+        require(canForward(msg.sender, _evmCallScript), ERROR_CANNOT_FORWARD);
         _delayExecution(new bytes(0), _evmCallScript);
     }
 
@@ -194,16 +194,18 @@ contract Delay is DisputableAragonApp, IForwarder {
     */
     function execute(uint256 _delayedScriptId) external nonReentrant {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
-        require(_canExecute(delayedScript), ERROR_CAN_NOT_EXECUTE);
+        require(_canExecute(delayedScript), ERROR_CANNOT_EXECUTE);
 
-        runScript(delayedScript.evmCallScript, new bytes(0), new address[](0));
-
-        (,,,,bool closed,,) = _ensureAgreement().getAction(delayedScript.actionId);
+        (,,,,,bool closed,,) = _ensureAgreement().getAction(delayedScript.actionId);
         if (!closed) {
             _closeAgreementAction(delayedScript.actionId);
         }
 
         delayedScript.delayedScriptStatus = DelayedScriptStatus.Executed;
+
+        address[] memory blacklist = new address[](1);
+        blacklist[0] = address(_getAgreement());
+        runScript(delayedScript.evmCallScript, new bytes(0), blacklist);
 
         emit ExecutedScript(_delayedScriptId, delayedScript.actionId);
     }
@@ -214,8 +216,8 @@ contract Delay is DisputableAragonApp, IForwarder {
     */
     function closeAgreementAction(uint256 _delayedScriptId) external {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
-        require(_canExecute(delayedScript), ERROR_CAN_NOT_EXECUTE);
 
+        require(_canClose(delayedScript), ERROR_CANNOT_CLOSE);
         _closeAgreementAction(delayedScript.actionId);
 
         emit AgreementActionClosed(_delayedScriptId, delayedScript.actionId);
@@ -235,7 +237,7 @@ contract Delay is DisputableAragonApp, IForwarder {
 
         uint256 actionId = _newAgreementAction(delayedScriptIndex, _context, msg.sender);
         delayedScripts[delayedScriptIndex] =
-            DelayedScript(getTimestamp64().add(executionDelay), 0, _evmCallScript, actionId, DelayedScriptStatus.Active);
+            DelayedScript(getTimestamp64().add(executionDelay), 0, DelayedScriptStatus.Active, _evmCallScript, actionId);
 
         emit DelayedScriptStored(delayedScriptIndex, actionId, _evmCallScript);
         return delayedScriptIndex;
@@ -247,8 +249,12 @@ contract Delay is DisputableAragonApp, IForwarder {
     }
 
     function _canExecute(DelayedScript storage _delayedScript) internal view returns (bool) {
-        bool withinExecutionWindow = getTimestamp64() > _delayedScript.executionFromTime;
+        bool withinExecutionWindow = getTimestamp64() >= _delayedScript.executionFromTime;
         return _scriptExistsAndActive(_delayedScript) && withinExecutionWindow;
+    }
+
+    function _canClose(DelayedScript storage _delayedScript) internal view returns (bool) {
+        return _canExecute(_delayedScript);
     }
 
     function _scriptExistsAndActive(DelayedScript storage _delayedScript) internal view returns (bool) {

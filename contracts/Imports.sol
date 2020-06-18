@@ -7,7 +7,7 @@ import "@aragon/os/contracts/factory/EVMScriptRegistryFactory.sol";
 
 import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
-import "@aragon/apps-agreement/contracts/staking/StakingFactory.sol";
+import "@aragon/staking/contracts/StakingFactory.sol";
 import "@aragon/apps-agreement/contracts/test/mocks/AgreementMock.sol";
 import "@aragon/apps-agreement/contracts/test/mocks/disputable/ArbitratorMock.sol";
 

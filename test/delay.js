@@ -50,7 +50,7 @@ contract('Delay', ([rootAccount]) => {
 
     beforeEach(async () => {
       await delay.initialize(DELAY_LENGTH)
-      await agreement.register({ disputable: delay, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: DELAY_LENGTH, from: rootAccount })
+      await agreement.activate({ disputable: delay, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: DELAY_LENGTH, from: rootAccount })
     })
 
     it('sets the initial delay correctly and initializes', async () => {
@@ -341,17 +341,17 @@ contract('Delay', ([rootAccount]) => {
 
           it('reverts when script does not exist', async () => {
             const incorrectScriptId = 99
-            await assertRevert(delay.execute(incorrectScriptId), 'DELAY_CAN_NOT_EXECUTE')
+            await assertRevert(delay.execute(incorrectScriptId), 'DELAY_CANNOT_EXECUTE')
           })
 
           it('reverts when executing script before execution time', async () => {
-            await assertRevert(delay.execute(delayedScriptId), 'DELAY_CAN_NOT_EXECUTE')
+            await assertRevert(delay.execute(delayedScriptId), 'DELAY_CANNOT_EXECUTE')
           })
 
           it('reverts when executing paused script', async () => {
             await agreement.challenge({ actionId })
             await delay.mockIncreaseTime(DELAY_LENGTH)
-            await assertRevert(delay.execute(delayedScriptId), 'DELAY_CAN_NOT_EXECUTE')
+            await assertRevert(delay.execute(delayedScriptId), 'DELAY_CANNOT_EXECUTE')
           })
 
           it('reverts when executing cancelled script', async () => {
@@ -360,7 +360,7 @@ contract('Delay', ([rootAccount]) => {
             await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
             await delay.mockIncreaseTime(DELAY_LENGTH)
 
-            await assertRevert(delay.execute(delayedScriptId), 'DELAY_CAN_NOT_EXECUTE')
+            await assertRevert(delay.execute(delayedScriptId), 'DELAY_CANNOT_EXECUTE')
           })
 
           it('reverts when evmScript reenters delay contract, attempting to execute same script twice', async () => {
@@ -377,7 +377,21 @@ contract('Delay', ([rootAccount]) => {
             await assertRevert(delay.execute(scriptId), 'REENTRANCY_REENTRANT_CALL')
           })
 
-          it('closes the agreement anction', async () => {
+          it('reverts when evmScript calls function on Agreements contract', async () => {
+            const action = {
+              to: agreement.address,
+              calldata: agreement.agreement.contract.methods.getDisputableInfo(delay.address).encodeABI(),
+            }
+            const agreementScript = encodeCallScript([action])
+
+            const delayReceipt = await delay.delayExecution("0x", agreementScript)
+
+            const scriptId = getEventArgument(delayReceipt, 'DelayedScriptStored', 'delayedScriptId')
+            await delay.mockIncreaseTime(DELAY_LENGTH)
+            await assertRevert(delay.execute(scriptId), 'EVMCALLS_BLACKLISTED_CALL')
+          })
+
+          it('closes the agreement action', async () => {
             const { closed: closedBefore } = await agreement.getAction(actionId)
             await delay.mockIncreaseTime(DELAY_LENGTH)
 
@@ -402,7 +416,7 @@ contract('Delay', ([rootAccount]) => {
           })
 
           it('reverts when cannot execute', async () => {
-            await assertRevert(delay.closeAgreementAction(delayedScriptId), "DELAY_CAN_NOT_EXECUTE")
+            await assertRevert(delay.closeAgreementAction(delayedScriptId), "DELAY_CANNOT_CLOSE")
           })
 
           it('reverts when already closed', async () => {
@@ -459,7 +473,7 @@ contract('Delay', ([rootAccount]) => {
 
         it('reverts when permission revoked', async () => {
           await deployer.acl.revokePermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE)
-          await assertRevert(delay.forward(script), 'DELAY_CAN_NOT_FORWARD')
+          await assertRevert(delay.forward(script), 'DELAY_CANNOT_FORWARD')
         })
 
         itUpdatesExecutionStateCorrectly()
@@ -488,7 +502,7 @@ contract('Delay', ([rootAccount]) => {
     })
 
     it('reverts on creating delay execution script (forward)', async () => {
-      await assertRevert(delay.forward(script), "DELAY_CAN_NOT_FORWARD")
+      await assertRevert(delay.forward(script), "DELAY_CANNOT_FORWARD")
     })
   })
 })
