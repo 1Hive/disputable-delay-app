@@ -1,8 +1,8 @@
 import React from 'react'
 import {
+  BackButton,
   Bar,
   Box,
-  BackButton,
   Countdown,
   GU,
   Split,
@@ -10,23 +10,26 @@ import {
   useLayout,
   useTheme,
 } from '@aragon/ui'
-import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
 import DelayActions from '../components/DelayActions'
-import ScriptText from '../components/ScriptText'
-import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
+import DelayDescription from '../components/DelayDescription'
 import DelayStatus from '../components/DelayStatus'
+import DetailedDescription from '../components/DetailedDescription'
+import LocalIdentityBadge from '../components/LocalIdentityBadge/LocalIdentityBadge'
+import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
 
 import STATUS from '../delay-status-types'
 import { formatTime, toHours } from '../lib/math-utils'
+
+const DEFAULT_DESCRIPTION = 'No additional description provided.'
 
 const DelayDetail = React.memo(({ delay, onBack, onDelayAction }) => {
   const theme = useTheme()
   const { layoutName } = useLayout()
 
-  const { executionTargetData, executionDescription, creator } = delay
+  const { creator, executionTargetData, executionDescription, path: executionPath } = delay
 
   return (
-    <React.Fragment>
+    <>
       <Bar>
         <BackButton onClick={onBack} />
       </Bar>
@@ -78,7 +81,15 @@ const DelayDetail = React.memo(({ delay, onBack, onDelayAction }) => {
                       ${textStyle('body2')};
                     `}
                   >
-                    <ScriptText text={executionDescription} />
+                    <DelayDescription
+                      description={
+                        Array.isArray(executionPath) ? (
+                          <DetailedDescription path={executionPath} />
+                        ) : (
+                          executionDescription || DEFAULT_DESCRIPTION
+                        )
+                      }
+                    />
                   </div>
                 </div>
                 <div>
@@ -115,7 +126,7 @@ const DelayDetail = React.memo(({ delay, onBack, onDelayAction }) => {
           </Box>
         }
       />
-    </React.Fragment>
+    </>
   )
 })
 

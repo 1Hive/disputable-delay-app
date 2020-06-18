@@ -149,15 +149,17 @@ async function getDelayedScript(scriptId) {
 
   let description = ''
   let executionTargets = []
+  let path = []
 
   try {
-    const path = await app.describeScript(evmCallScript).toPromise()
+    path = (await app.describeScript(evmCallScript).toPromise()) || []
 
     executionTargets = [...new Set(path.map(({ to }) => to))]
 
-    description = path
+    // TODO: consider removing description as it can be rendered from the path in the frontend
+    description = path.length
       ? path
-          .map(step => {
+          .map(step => { 
             const identifier = step.identifier ? ` (${step.identifier})` : ''
             const app = step.name ? `${step.name}${identifier}` : `${step.to}`
 
@@ -172,10 +174,11 @@ async function getDelayedScript(scriptId) {
 
   return {
     scriptId,
-    executionTime: marshallDate(executionTime),
-    executionDescription: description,
     executionTargets,
+    executionDescription: description,
+    executionTime: marshallDate(executionTime),
     pausedAt: marshallDate(pausedAt),
+    path,
   }
 }
 

@@ -1,12 +1,11 @@
 import React from 'react'
 import styled from 'styled-components'
+import { Card, GU, textStyle } from '@aragon/ui'
 
-import { Card, textStyle, GU } from '@aragon/ui'
-
-import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
-import ScriptText from '../components/ScriptText'
-import DelayStatus from '../components/DelayStatus'
 import CustomProgressBar from './CustomProgressBar'
+import DelayDescription from './DelayDescription'
+import DelayStatus from '../components/DelayStatus'
+import LocalLabelAppBadge from '../components/LocalIdentityBadge/LocalLabelAppBadge'
 
 import STATUS from '../delay-status-types'
 
@@ -30,10 +29,20 @@ const DelayCard = React.memo(({ delay, selectDelay }) => {
           label={executionTargetData.name}
         />
       </div>
-      <Description>
-        <span css="font-weight: bold;">#{delay.scriptId}:</span>{' '}
-        <ScriptText text={delay.executionDescription} disabled />
-      </Description>
+      <DelayDescription
+        prefix={<span css="font-weight: bold">#{delay.scriptId}: </span>}
+        description={delay.executionDescription}
+        disabled
+        css={`
+          overflow: hidden;
+          ${textStyle('body1')};
+          line-height: ${27}px; // 27px = line-height of textstyle('body1')
+          height: ${27 * 3}px; // 27px * 3 = line-height * 3 lines
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 3;
+        `}
+      />
       <div>
         {status === STATUS.PENDING_EXECUTION ? (
           <DelayStatus status={delay.status} />
@@ -58,17 +67,6 @@ const CardItem = styled(Card)`
   box-shadow: rgba(51, 77, 117, 0.2) 0px 1px 3px;
   border: 0;
   cursor: pointer;
-`
-
-const Description = styled.div`
-  ${textStyle('body1')};
-  /* lines per font size per line height */
-  /* shorter texts align to the top */
-  height: 84px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
 `
 
 export default DelayCard
