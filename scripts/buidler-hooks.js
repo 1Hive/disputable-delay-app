@@ -1,6 +1,6 @@
 let pct16
 
-let tokens, appManager
+let tokens, appManager, voting
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -26,6 +26,19 @@ module.exports = {
     log(`> Change minime controller to tokens app`)
     await tokens.initialize([minime.address, true, 0])
     log(`> Tokens app installed: ${tokens.address}`)
+    
+
+    voting = await _experimentalAppInstaller('voting', {
+      initializeArgs: [
+        minime.address,
+        pct16(50), // support 50%
+        pct16(25), // quorum 15%
+        604800, // 7 days
+      ],
+    })
+    log(`> Voting app installed: ${voting.address}`)
+
+    await tokens.createPermission('MINT_ROLE', voting.address)
   },
 
   getInitParams: async function({}, builderRuntimeEnv) {
@@ -35,7 +48,7 @@ module.exports = {
   },
 
   postInit: async function({ proxy }, bre) {
-    await tokens.createPermission('MINT_ROLE', proxy.address)
+    await voting.createPermission('CREATE_VOTES_ROLE', proxy.address)
   }
 }
 
