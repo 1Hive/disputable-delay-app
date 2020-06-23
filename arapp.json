@@ -1,6 +1,6 @@
 {
-  "appName": "delay.aragonpm.eth",
-  "path": "contracts/Delay.sol",
+  "appName": "disputable-delay.aragonpm.eth",
+  "path": "contracts/DisputableDelay.sol",
   "roles": [
     {
       "name": "Set delay",

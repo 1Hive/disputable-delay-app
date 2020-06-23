@@ -7,7 +7,8 @@ The delay app enables Aragon organizations to require a configurable delay betwe
 
 #### 🚨 Security Review Status: Not Audited
 [Contract audited](https://diligence.consensys.net/audits/2019/12/dandelion-organizations/) at a 
-[previous commit](https://github.com/1Hive/delay-app/tree/80db310f4e912a3813f4ef45208ffcd4c4198eaa)
+[previous commit](https://github.com/1Hive/delay-app/tree/80db310f4e912a3813f4ef45208ffcd4c4198eaa) but has 
+since been substantially modified to support Aragon Agreements and Disputable Delayed Actions.
 
 ## How does it work?
 

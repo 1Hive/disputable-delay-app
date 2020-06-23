@@ -1,6 +1,6 @@
 pragma solidity ^0.4.24;
 
-import "../Delay.sol";
+import "../DisputableDelay.sol";
 import "@aragon/contract-test-helpers/contracts/TimeHelpersMock.sol";
 
-contract MockDelay is Delay, TimeHelpersMock {}
+contract MockDisputableDelay is DisputableDelay, TimeHelpersMock {}

@@ -1,4 +1,4 @@
-const Delay = artifacts.require('MockDelay')
+const DisputableDelay = artifacts.require('MockDisputableDelay')
 const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
@@ -19,12 +19,12 @@ const DELAYED_SCRIPT_STATUS = {
   EXECUTED: 3
 }
 
-contract('Delay', ([rootAccount]) => {
+contract('DisputableDelay', ([rootAccount]) => {
   let agreement, collateralToken, delayBase, delay
   let SET_DELAY_ROLE, DELAY_EXECUTION_ROLE, SET_AGREEMENT_ROLE, CHALLENGE_ROLE
 
   before('deploy base apps', async () => {
-    delayBase = await Delay.new()
+    delayBase = await DisputableDelay.new()
     agreement = await deployer.deployAndInitializeWrapper({ rootAccount })
     collateralToken = await deployer.deployCollateralToken()
     await agreement.sign(rootAccount)
@@ -38,7 +38,7 @@ contract('Delay', ([rootAccount]) => {
   beforeEach('deploy dao and delay', async () => {
     const newDelayAppReceipt =
       await deployer.dao.newAppInstance(nameHash('delay.aragonpm.eth'), delayBase.address, '0x', false, {from: rootAccount,})
-    delay = await Delay.at(getNewProxyAddress(newDelayAppReceipt))
+    delay = await DisputableDelay.at(getNewProxyAddress(newDelayAppReceipt))
 
     await deployer.acl.createPermission(agreement.address, delay.address, SET_AGREEMENT_ROLE, rootAccount)
     await deployer.acl.createPermission(ANY_ADDR, delay.address, CHALLENGE_ROLE, rootAccount)

@@ -16,7 +16,7 @@ Cancelled (by Agreements app)
 Executed
 */
 
-contract Delay is DisputableAragonApp, IForwarder {
+contract DisputableDelay is DisputableAragonApp, IForwarder {
     using SafeMath64 for uint64;
 
     /**
