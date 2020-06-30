@@ -6,16 +6,9 @@ import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
 
-/*
-TODO: Remove the below once UI is updated.
-Possible states displayed on UI:
-Active
-Paused (/challenged)
-Executable (using canExecute())
-Cancelled (by Agreements app)
-Executed
-*/
-
+/**
+ * This app must be the first in a forwarding chain due to being Disputable and it's use of `msg.sender`
+ */
 contract DisputableDelay is DisputableAragonApp, IForwarder {
     using SafeMath64 for uint64;
 
@@ -29,12 +22,13 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     string private constant ERROR_NO_SCRIPT = "DELAY_NO_SCRIPT";
     string private constant ERROR_CANNOT_FORWARD = "DELAY_CANNOT_FORWARD";
     string private constant ERROR_CANNOT_EXECUTE = "DELAY_CANNOT_EXECUTE";
-    string private constant ERROR_CANNOT_CLOSE = "DELAY_CANNOT_CLOSE";
+    string private constant ERROR_NOT_ACTIVE = "DELAY_NOT_ACTIVE";
+    string private constant ERROR_CREATOR_NOT_SENDER = "DELAY_CREATOR_NOT_SENDER";
 
     enum DelayedScriptStatus {
         Active,              // A delayed script that has been reported to Agreements
         Paused,              // A delayed script that is being challenged by Agreements
-        Cancelled,           // A delayed script that has been cancelled by Agreements
+        Cancelled,           // A delayed script that has been cancelled
         Executed             // A delayed script that has been executed
     }
 
@@ -44,6 +38,7 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
         DelayedScriptStatus delayedScriptStatus;
         bytes evmCallScript;
         uint256 actionId;
+        address creator;
     }
 
     uint64 public executionDelay;
@@ -86,7 +81,10 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     * @dev IDisputable interface conformance
     */
     function canClose(uint256 _delayedScriptId) external view returns (bool) {
-        return _canExecute(delayedScripts[_delayedScriptId]);
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+
+        return _canExecute(delayedScript)
+            || delayedScript.delayedScriptStatus == DelayedScriptStatus.Cancelled;
     }
 
     /**
@@ -201,6 +199,23 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     }
 
     /**
+    * @notice Cancel the script with ID `_delayedScriptId`
+    * @param _delayedScriptId The ID of the script to execute
+    */
+    function cancelExecution(uint256 _delayedScriptId) external {
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+
+        require(delayedScript.delayedScriptStatus == DelayedScriptStatus.Active, ERROR_NOT_ACTIVE);
+        require(delayedScript.creator == msg.sender, ERROR_CREATOR_NOT_SENDER);
+
+        delayedScript.delayedScriptStatus = DelayedScriptStatus.Cancelled;
+
+        _closeAgreementAction(delayedScript.actionId);
+
+        emit ExecutionCancelled(_delayedScriptId, delayedScript.actionId);
+    }
+
+    /**
     * @notice Return whether a script with ID #`_scriptId` can be executed
     * @param _delayedScriptId The ID of the script to execute
     */
@@ -219,7 +234,7 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
 
         uint256 actionId = _newAgreementAction(delayedScriptIndex, _context, msg.sender);
         delayedScripts[delayedScriptIndex] =
-            DelayedScript(getTimestamp64().add(executionDelay), 0, DelayedScriptStatus.Active, _evmCallScript, actionId);
+            DelayedScript(getTimestamp64().add(executionDelay), 0, DelayedScriptStatus.Active, _evmCallScript, actionId, msg.sender);
 
         emit DelayedScriptStored(delayedScriptIndex, actionId, _evmCallScript);
         return delayedScriptIndex;

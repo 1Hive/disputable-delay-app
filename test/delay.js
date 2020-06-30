@@ -19,7 +19,7 @@ const DELAYED_SCRIPT_STATUS = {
   EXECUTED: 3
 }
 
-contract('DisputableDelay', ([rootAccount]) => {
+contract('DisputableDelay', ([rootAccount, otherAccount]) => {
   let agreement, collateralToken, delayBase, delay
   let SET_DELAY_ROLE, DELAY_EXECUTION_ROLE, SET_AGREEMENT_ROLE, CHALLENGE_ROLE
 
@@ -37,7 +37,7 @@ contract('DisputableDelay', ([rootAccount]) => {
 
   beforeEach('deploy dao and delay', async () => {
     const newDelayAppReceipt =
-      await deployer.dao.newAppInstance(nameHash('delay.aragonpm.eth'), delayBase.address, '0x', false, {from: rootAccount,})
+      await deployer.dao.newAppInstance(nameHash('delay.aragonpm.eth'), delayBase.address, '0x', false, { from: rootAccount })
     delay = await DisputableDelay.at(getNewProxyAddress(newDelayAppReceipt))
 
     await deployer.acl.createPermission(agreement.address, delay.address, SET_AGREEMENT_ROLE, rootAccount)
@@ -50,7 +50,14 @@ contract('DisputableDelay', ([rootAccount]) => {
 
     beforeEach(async () => {
       await delay.initialize(DELAY_LENGTH)
-      await agreement.activate({ disputable: delay, collateralToken, actionCollateral: 0, challengeCollateral: 0, challengeDuration: DELAY_LENGTH, from: rootAccount })
+      await agreement.activate({
+        disputable: delay,
+        collateralToken,
+        actionCollateral: 0,
+        challengeCollateral: 0,
+        challengeDuration: DELAY_LENGTH,
+        from: rootAccount
+      })
     })
 
     it('sets the initial delay correctly and initializes', async () => {
@@ -94,7 +101,7 @@ contract('DisputableDelay', ([rootAccount]) => {
         executionTarget = await ExecutionTarget.new()
         const action = {
           to: executionTarget.address,
-          calldata: executionTarget.contract.methods.execute().encodeABI(),
+          calldata: executionTarget.contract.methods.execute().encodeABI()
         }
         script = encodeCallScript([action])
       })
@@ -221,7 +228,10 @@ contract('DisputableDelay', ([rootAccount]) => {
             await agreement.challenge({ actionId })
             await agreement.dispute({ actionId })
             await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
-            await assertRevert(agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER }), 'AGR_CANNOT_RULE_ACTION')
+            await assertRevert(agreement.executeRuling({
+              actionId,
+              ruling: RULINGS.IN_FAVOR_OF_CHALLENGER
+            }), 'AGR_CANNOT_RULE_ACTION')
           })
         })
 
@@ -246,7 +256,10 @@ contract('DisputableDelay', ([rootAccount]) => {
             await agreement.challenge({ actionId })
             await agreement.dispute({ actionId })
             await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
-            await assertRevert(agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER }), 'AGR_CANNOT_RULE_ACTION')
+            await assertRevert(agreement.executeRuling({
+              actionId,
+              ruling: RULINGS.IN_FAVOR_OF_SUBMITTER
+            }), 'AGR_CANNOT_RULE_ACTION')
           })
 
           it('closes the action', async () => {
@@ -334,11 +347,11 @@ contract('DisputableDelay', ([rootAccount]) => {
           it('reverts when evmScript reenters delay contract, attempting to execute same script twice', async () => {
             const action = {
               to: delay.address,
-              calldata: delay.contract.methods.execute(1).encodeABI(),
+              calldata: delay.contract.methods.execute(1).encodeABI()
             }
             const reenteringScript = encodeCallScript([action])
 
-            const delayReceipt = await delay.delayExecution("0x", reenteringScript)
+            const delayReceipt = await delay.delayExecution('0x', reenteringScript)
 
             const scriptId = getEventArgument(delayReceipt, 'DelayedScriptStored', 'delayedScriptId')
             await delay.mockIncreaseTime(DELAY_LENGTH)
@@ -348,11 +361,11 @@ contract('DisputableDelay', ([rootAccount]) => {
           it('reverts when evmScript calls function on Agreements contract', async () => {
             const action = {
               to: agreement.address,
-              calldata: agreement.agreement.contract.methods.getDisputableInfo(delay.address).encodeABI(),
+              calldata: agreement.agreement.contract.methods.getDisputableInfo(delay.address).encodeABI()
             }
             const agreementScript = encodeCallScript([action])
 
-            const delayReceipt = await delay.delayExecution("0x", agreementScript)
+            const delayReceipt = await delay.delayExecution('0x', agreementScript)
 
             const scriptId = getEventArgument(delayReceipt, 'DelayedScriptStored', 'delayedScriptId')
             await delay.mockIncreaseTime(DELAY_LENGTH)
@@ -370,19 +383,64 @@ contract('DisputableDelay', ([rootAccount]) => {
             assert.isTrue(closedAfter)
           })
         })
+
+        describe('cancelExecution(uint256 _delayedScriptId)', () => {
+          it('cancels execution when creator attempts to cancel', async () => {
+            await delay.cancelExecution(delayedScriptId)
+
+            const { delayedScriptStatus } = await delay.delayedScripts(delayedScriptId)
+
+            assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.CANCELLED)
+          })
+
+          it('closes the agreement action', async () => {
+            const { closed: closedBefore } = await agreement.getAction(actionId)
+
+            await delay.cancelExecution(delayedScriptId)
+
+            const { closed: closedAfter } = await agreement.getAction(actionId)
+            assert.isFalse(closedBefore)
+            assert.isTrue(closedAfter)
+          })
+
+          it('reverts when action is challenged', async () => {
+            await agreement.challenge({ actionId })
+
+            await assertRevert(delay.cancelExecution(delayedScriptId), 'DELAY_NOT_ACTIVE')
+          })
+
+          it('reverts when action is cancelled', async () => {
+            await agreement.challenge({ actionId })
+            await agreement.dispute({ actionId })
+            await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_CHALLENGER })
+
+            await assertRevert(delay.cancelExecution(delayedScriptId), 'DELAY_NOT_ACTIVE')
+          })
+
+          it('reverts when action is executed', async () => {
+            await delay.mockIncreaseTime(DELAY_LENGTH)
+            await delay.execute(delayedScriptId)
+
+            await assertRevert(delay.cancelExecution(delayedScriptId), 'DELAY_NOT_ACTIVE')
+          })
+
+          it('reverts when attempted by account other than creator', async () => {
+            await assertRevert(delay.cancelExecution(delayedScriptId, { from: otherAccount }), 'DELAY_CREATOR_NOT_SENDER')
+          })
+        })
       }
 
       describe('delayExecution(bytes _evmCallScript)', () => {
         beforeEach(async () => {
           delayCreatedTimestamp = await delay.getTimestampPublic()
-          const delayExecutionReceipt = await delay.delayExecution("0x", script)
+          const delayExecutionReceipt = await delay.delayExecution('0x', script)
           delayedScriptId = getEventArgument(delayExecutionReceipt, 'DelayedScriptStored', 'delayedScriptId')
           actionId = getEventArgument(delayExecutionReceipt, 'DelayedScriptStored', 'actionId')
         })
 
         it('reverts when permission revoked', async () => {
           await deployer.acl.revokePermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE)
-          await assertRevert(delay.delayExecution("0x", script), 'APP_AUTH_FAILED')
+          await assertRevert(delay.delayExecution('0x', script), 'APP_AUTH_FAILED')
         })
 
         itUpdatesExecutionStateCorrectly()
@@ -413,21 +471,21 @@ contract('DisputableDelay', ([rootAccount]) => {
       const executionTarget = await ExecutionTarget.new()
       const action = {
         to: executionTarget.address,
-        calldata: executionTarget.contract.methods.execute().encodeABI(),
+        calldata: executionTarget.contract.methods.execute().encodeABI()
       }
       script = encodeCallScript([action])
     })
 
     it('reverts on setting execution delay', async () => {
-      await assertRevert(delay.setExecutionDelay(10), "APP_AUTH_FAILED")
+      await assertRevert(delay.setExecutionDelay(10), 'APP_AUTH_FAILED')
     })
 
     it('reverts on creating delay execution script (delayExecution)', async () => {
-      await assertRevert(delay.delayExecution("0x", script), "APP_AUTH_FAILED")
+      await assertRevert(delay.delayExecution('0x', script), 'APP_AUTH_FAILED')
     })
 
     it('reverts on creating delay execution script (forward)', async () => {
-      await assertRevert(delay.forward(script), "DELAY_CANNOT_FORWARD")
+      await assertRevert(delay.forward(script), 'DELAY_CANNOT_FORWARD')
     })
   })
 })
