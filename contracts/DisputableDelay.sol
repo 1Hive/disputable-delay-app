@@ -40,7 +40,7 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
         DelayedScriptStatus delayedScriptStatus;
         bytes evmCallScript;
         uint256 actionId;
-        address creator;
+        address submitter;
     }
 
     uint64 public executionDelay;
@@ -208,7 +208,7 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
 
         bool senderHasPermission = canPerform(msg.sender, CANCEL_EXECUTION_ROLE, new uint256[](0));
-        require(delayedScript.creator == msg.sender || senderHasPermission, ERROR_SENDER_CANNOT_CANCEL);
+        require(delayedScript.submitter == msg.sender || senderHasPermission, ERROR_SENDER_CANNOT_CANCEL);
         require(delayedScript.delayedScriptStatus == DelayedScriptStatus.Active, ERROR_NOT_ACTIVE);
 
         delayedScript.delayedScriptStatus = DelayedScriptStatus.Cancelled;

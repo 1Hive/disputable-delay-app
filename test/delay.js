@@ -385,7 +385,7 @@ contract('DisputableDelay', ([rootAccount, otherAccount]) => {
         })
 
         describe('cancelExecution(uint256 _delayedScriptId)', () => {
-          it('cancels execution when creator attempts to cancel', async () => {
+          it('cancels execution when submitter attempts to cancel', async () => {
             await delay.cancelExecution(delayedScriptId)
 
             const { delayedScriptStatus } = await delay.delayedScripts(delayedScriptId)
@@ -402,7 +402,7 @@ contract('DisputableDelay', ([rootAccount, otherAccount]) => {
             assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.CANCELLED)
           })
 
-          it('reverts when attempted by account other than creator or permissioned', async () => {
+          it('reverts when attempted by account other than submitter or permissioned', async () => {
             await assertRevert(delay.cancelExecution(delayedScriptId, { from: otherAccount }), 'DELAY_SENDER_CANNOT_CANCEL')
           })
 
