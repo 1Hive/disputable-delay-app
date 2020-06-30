@@ -64,7 +64,7 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     */
     function initialize(uint64 _executionDelay) external onlyInit {
         initialized();
-        executionDelay = _executionDelay;
+        _setExecutionDelay(_executionDelay);
     }
 
     /**
@@ -72,24 +72,7 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     * @param _executionDelay The new execution delay
     */
     function setExecutionDelay(uint64 _executionDelay) external auth(SET_DELAY_ROLE) {
-        executionDelay = _executionDelay;
-
-        emit ExecutionDelaySet(executionDelay);
-    }
-
-    /**
-    * @dev IDisputable interface conformance
-    */
-    function getDisputableAction(uint256 _delayedScriptId)
-        external view returns (uint64 endDate, bool challenged, bool finished)
-    {
-        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
-        DelayedScriptStatus delayedScriptStatus = delayedScript.delayedScriptStatus;
-
-        endDate = delayedScript.executionFromTime;
-        challenged = delayedScriptStatus == DelayedScriptStatus.Paused;
-        finished = delayedScriptStatus == DelayedScriptStatus.Cancelled
-            || delayedScriptStatus == DelayedScriptStatus.Executed;
+        _setExecutionDelay(_executionDelay);
     }
 
     /**
@@ -103,7 +86,7 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     * @dev IDisputable interface conformance
     */
     function canClose(uint256 _delayedScriptId) external view returns (bool) {
-        return _canClose(delayedScripts[_delayedScriptId]);
+        return _canExecute(delayedScripts[_delayedScriptId]);
     }
 
     /**
@@ -141,6 +124,7 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
 
     /**
     * @dev Challenge script execution, IDisputable interface conformance
+    *      Note that this will only be called if Delay.canChallenge() returns true
     * @param _delayedScriptId The ID of the script execution to challenge
     */
     function _onDisputableActionChallenged(uint256 _delayedScriptId, uint256 /* _challengeId */, address /* _challenger */)
@@ -155,6 +139,8 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
 
     /**
     * @dev Allow script execution, IDisputable interface conformance
+    *      Note that either this, _onDisputableActionRejected() or _onDisputableActionVoided()
+    *      will be called once for each challenge
     * @param _delayedScriptId The ID of the script execution to allow
     */
     function _onDisputableActionAllowed(uint256 _delayedScriptId) internal {
@@ -170,6 +156,8 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
 
     /**
     * @dev Reject script execution, IDisputable interface conformance
+    *      Note that either this, _onDisputableActionAllowed() or _onDisputableActionVoided()
+    *      will be called once for each challenge
     * @param _delayedScriptId The ID of the script execution to reject
     */
     function _onDisputableActionRejected(uint256 _delayedScriptId) internal {
@@ -182,6 +170,8 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
 
     /**
     * @dev Void script execution, IDisputable interface conformance
+    *      Note that either this, _onDisputableActionAllowed() or _onDisputableActionRejected()
+    *      will be called once for each challenge
     * @param _delayedScriptId The ID of the script execution to void
     */
     function _onDisputableActionVoided(uint256 _delayedScriptId) internal {
@@ -211,24 +201,16 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     }
 
     /**
-    * @notice Close agreement action with ID `_delayedScriptId`
-    * @param _delayedScriptId The ID of the script to close the agreement action of
-    */
-    function closeAgreementAction(uint256 _delayedScriptId) external {
-        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
-
-        require(_canClose(delayedScript), ERROR_CANNOT_CLOSE);
-        _closeAgreementAction(delayedScript.actionId);
-
-        emit AgreementActionClosed(_delayedScriptId, delayedScript.actionId);
-    }
-
-    /**
     * @notice Return whether a script with ID #`_scriptId` can be executed
     * @param _delayedScriptId The ID of the script to execute
     */
     function canExecute(uint256 _delayedScriptId) public view returns (bool) {
         return _canExecute(delayedScripts[_delayedScriptId]);
+    }
+
+    function _setExecutionDelay(uint64 _executionDelay) internal {
+        executionDelay = _executionDelay;
+        emit ExecutionDelaySet(_executionDelay);
     }
 
     function _delayExecution(bytes _context, bytes _evmCallScript) internal returns (uint256) {
@@ -251,10 +233,6 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     function _canExecute(DelayedScript storage _delayedScript) internal view returns (bool) {
         bool withinExecutionWindow = getTimestamp64() >= _delayedScript.executionFromTime;
         return _scriptExistsAndActive(_delayedScript) && withinExecutionWindow;
-    }
-
-    function _canClose(DelayedScript storage _delayedScript) internal view returns (bool) {
-        return _canExecute(_delayedScript);
     }
 
     function _scriptExistsAndActive(DelayedScript storage _delayedScript) internal view returns (bool) {
