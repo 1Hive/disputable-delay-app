@@ -15,15 +15,17 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     /**
         bytes32 public constant SET_DELAY_ROLE = keccak256("SET_DELAY_ROLE");
         bytes32 public constant DELAY_EXECUTION_ROLE = keccak256("DELAY_EXECUTION_ROLE");
+        bytes32 public constant CANCEL_EXECUTION_ROLE = keccak256("CANCEL_EXECUTION_ROLE");
     */
     bytes32 public constant SET_DELAY_ROLE = 0x2b56821903fce674a357ec19f2dd583428c0cc74e6be302c348b3a3ffa5b4f66;
     bytes32 public constant DELAY_EXECUTION_ROLE = 0x68a7ca9b0904e026378fb888f3be95ada2a0c0b11f58c40530c1a383c0f99ce9;
+    bytes32 public constant CANCEL_EXECUTION_ROLE = 0x599ee266bc370c66d73339d3e75a02faef68267fcd93a47d7f174caa6026a691;
 
     string private constant ERROR_NO_SCRIPT = "DELAY_NO_SCRIPT";
     string private constant ERROR_CANNOT_FORWARD = "DELAY_CANNOT_FORWARD";
     string private constant ERROR_CANNOT_EXECUTE = "DELAY_CANNOT_EXECUTE";
     string private constant ERROR_NOT_ACTIVE = "DELAY_NOT_ACTIVE";
-    string private constant ERROR_CREATOR_NOT_SENDER = "DELAY_CREATOR_NOT_SENDER";
+    string private constant ERROR_SENDER_CANNOT_CANCEL = "DELAY_SENDER_CANNOT_CANCEL";
 
     enum DelayedScriptStatus {
         Active,              // A delayed script that has been reported to Agreements
@@ -205,8 +207,9 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     function cancelExecution(uint256 _delayedScriptId) external {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
 
+        bool senderHasPermission = canPerform(msg.sender, CANCEL_EXECUTION_ROLE, new uint256[](0));
+        require(delayedScript.creator == msg.sender || senderHasPermission, ERROR_SENDER_CANNOT_CANCEL);
         require(delayedScript.delayedScriptStatus == DelayedScriptStatus.Active, ERROR_NOT_ACTIVE);
-        require(delayedScript.creator == msg.sender, ERROR_CREATOR_NOT_SENDER);
 
         delayedScript.delayedScriptStatus = DelayedScriptStatus.Cancelled;
 

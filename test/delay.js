@@ -3,8 +3,8 @@ const ExecutionTarget = artifacts.require('ExecutionTarget')
 
 const { assertRevert } = require('@aragon/apps-agreement/test/helpers/assert/assertThrow')
 const { ACTIONS_STATE, RULINGS } = require('@aragon/apps-agreement/test/helpers/utils/enums')
-const { encodeCallScript } = require('@aragon/contract-test-helpers/evmScript')
-const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-test-helpers/events')
+const { encodeCallScript } = require('@aragon/contract-helpers-test/evmScript')
+const { getEventArgument, getNewProxyAddress } = require('@aragon/contract-helpers-test/events')
 const { hash: nameHash } = require('eth-ens-namehash')
 
 const deployer = require('@aragon/apps-agreement/test/helpers/utils/deployer')(web3, artifacts)
@@ -389,8 +389,21 @@ contract('DisputableDelay', ([rootAccount, otherAccount]) => {
             await delay.cancelExecution(delayedScriptId)
 
             const { delayedScriptStatus } = await delay.delayedScripts(delayedScriptId)
-
             assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.CANCELLED)
+          })
+
+          it('cancels execution when account with permission attempts to cancel', async () => {
+            const cancelExecutionRole = await delay.CANCEL_EXECUTION_ROLE()
+            await deployer.acl.createPermission(otherAccount, delay.address, cancelExecutionRole, rootAccount)
+
+            await delay.cancelExecution(delayedScriptId, { from: otherAccount })
+
+            const { delayedScriptStatus } = await delay.delayedScripts(delayedScriptId)
+            assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.CANCELLED)
+          })
+
+          it('reverts when attempted by account other than creator or permissioned', async () => {
+            await assertRevert(delay.cancelExecution(delayedScriptId, { from: otherAccount }), 'DELAY_SENDER_CANNOT_CANCEL')
           })
 
           it('closes the agreement action', async () => {
@@ -422,10 +435,6 @@ contract('DisputableDelay', ([rootAccount, otherAccount]) => {
             await delay.execute(delayedScriptId)
 
             await assertRevert(delay.cancelExecution(delayedScriptId), 'DELAY_NOT_ACTIVE')
-          })
-
-          it('reverts when attempted by account other than creator', async () => {
-            await assertRevert(delay.cancelExecution(delayedScriptId, { from: otherAccount }), 'DELAY_CREATOR_NOT_SENDER')
           })
         })
       }
