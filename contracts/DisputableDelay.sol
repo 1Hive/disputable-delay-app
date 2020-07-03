@@ -76,7 +76,8 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     * @dev IDisputable interface conformance
     */
     function canChallenge(uint256 _delayedScriptId) external view returns (bool) {
-        return _canPause(delayedScripts[_delayedScriptId]);
+        DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
+        return _canPause(delayedScript) && delayedScript.pausedAt == 0;
     }
 
     /**
@@ -149,7 +150,6 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
         uint64 timePaused = getTimestamp64().sub(delayedScript.pausedAt);
 
         delayedScript.executionFromTime = delayedScript.executionFromTime.add(timePaused);
-        delayedScript.pausedAt = 0;
         delayedScript.delayedScriptStatus = DelayedScriptStatus.Active;
 
         emit ExecutionResumed(_delayedScriptId, delayedScript.actionId);

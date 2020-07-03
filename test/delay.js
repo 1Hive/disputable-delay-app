@@ -185,17 +185,12 @@ contract('DisputableDelay', ([rootAccount, otherAccount]) => {
             await assertRevert(agreement.challenge({ actionId }), 'AGR_CANNOT_CHALLENGE_ACTION')
           })
 
-          it('allows multiple challenges', async () => {
+          it('reverts when challenging multiple times', async () => {
             await agreement.challenge({ actionId })
             await agreement.dispute({ actionId })
             await agreement.executeRuling({ actionId, ruling: RULINGS.IN_FAVOR_OF_SUBMITTER })
-            const timestamp = await delay.getTimestampPublic()
 
-            await agreement.challenge({ actionId })
-
-            const { pausedAt, delayedScriptStatus } = await delay.delayedScripts(delayedScriptId)
-            assert.closeTo(pausedAt.toNumber(), timestamp.toNumber(), 3) // Is not exact due to agreement.challenge() executing multiple transactions
-            assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.PAUSED)
+            await assertRevert(agreement.challenge({ actionId }), "AGR_CANNOT_CHALLENGE_ACTION")
           })
         })
 
@@ -203,6 +198,7 @@ contract('DisputableDelay', ([rootAccount, otherAccount]) => {
           it('resumes execution script', async () => {
             const timePaused = 50
             const { executionFromTime: oldExecutionFromTime } = await delay.delayedScripts(delayedScriptId)
+            const expectedPausedAt = await delay.getTimestampPublic()
 
             await agreement.challenge({ actionId })
             await agreement.dispute({ actionId })
@@ -214,7 +210,7 @@ contract('DisputableDelay', ([rootAccount, otherAccount]) => {
               pausedAt: actualPausedAt,
               delayedScriptStatus
             } = await delay.delayedScripts(delayedScriptId)
-            assert.equal(actualPausedAt, 0)
+            assert.closeTo(actualPausedAt.toNumber(), expectedPausedAt.toNumber(), 5)
             assert.closeTo(actualExecutionFromTime.toNumber(), oldExecutionFromTime.toNumber() + timePaused, 5)
             assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.ACTIVE)
           })
@@ -276,6 +272,7 @@ contract('DisputableDelay', ([rootAccount, otherAccount]) => {
           it('resumes execution script', async () => {
             const timePaused = 50
             const { executionFromTime: oldExecutionFromTime } = await delay.delayedScripts(delayedScriptId)
+            const expectedPausedAt = await delay.getTimestampPublic()
 
             await agreement.challenge({ actionId })
             await agreement.dispute({ actionId })
@@ -287,7 +284,7 @@ contract('DisputableDelay', ([rootAccount, otherAccount]) => {
               pausedAt: actualPausedAt,
               delayedScriptStatus
             } = await delay.delayedScripts(delayedScriptId)
-            assert.equal(actualPausedAt, 0)
+            assert.closeTo(actualPausedAt.toNumber(), expectedPausedAt.toNumber(), 5)
             assert.closeTo(actualExecutionFromTime.toNumber(), oldExecutionFromTime.toNumber() + timePaused, 5)
             assert.equal(delayedScriptStatus, DELAYED_SCRIPT_STATUS.ACTIVE)
           })
