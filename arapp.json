@@ -11,6 +11,11 @@
       "name": "Delay execution",
       "id": "DELAY_EXECUTION_ROLE",
       "params": []
+    },
+    {
+      "name": "Cancel the script execution",
+      "id": "CANCEL_EXECUTION_ROLE",
+      "params": []
     }
   ],
   "environments": {

@@ -23,6 +23,7 @@ module.exports = {
     version: '0.4.24',
     optimizer: {
       enabled: true,
+      // Tests need to compile the Agreements contract which requires a lower optimizer runs setting
       runs: process.env.TEST ? 1000 : 10000,
     },
   },

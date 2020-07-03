@@ -86,7 +86,8 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
 
         return _canExecute(delayedScript)
-            || delayedScript.delayedScriptStatus == DelayedScriptStatus.Cancelled;
+            || delayedScript.delayedScriptStatus == DelayedScriptStatus.Cancelled
+            || delayedScript.delayedScriptStatus == DelayedScriptStatus.Executed;
     }
 
     /**
@@ -186,10 +187,7 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
         require(_canExecute(delayedScript), ERROR_CANNOT_EXECUTE);
 
-        (,,,,,bool closed,,) = _ensureAgreement().getAction(delayedScript.actionId);
-        if (!closed) {
-            _closeAgreementAction(delayedScript.actionId);
-        }
+        _closeAgreementAction(delayedScript.actionId);
 
         delayedScript.delayedScriptStatus = DelayedScriptStatus.Executed;
 
