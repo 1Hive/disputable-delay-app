@@ -98,11 +98,6 @@ contract('DisputableDelay', ([rootAccount, otherAccount]) => {
           await agreementDeployer.acl.revokePermission(rootAccount, delay.address, DELAY_EXECUTION_ROLE)
           assert.isFalse(await delay.canForward(rootAccount, '0x'))
         })
-
-        it('returns false when agreement has been deactivated', async () => {
-          await agreement.deactivate({disputable: delay})
-          assert.isFalse(await delay.canForward(rootAccount, '0x'))
-        })
       })
 
       describe('submit a delayed execution script', () => {

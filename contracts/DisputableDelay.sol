@@ -218,12 +218,9 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
     }
 
     function _canForward(address _sender, bytes) internal view returns (bool) {
-        bool activated = false;
-        if (_getAgreement() != IAgreement(0)) {
-            (activated,) = _getAgreement().getDisputableInfo(this);
-        }
+        bool agreementSet = _getAgreement() != IAgreement(0);
         // Note that `canPerform()` implicitly does an initialization check itself
-        return activated && canPerform(_sender, DELAY_EXECUTION_ROLE, arr(_sender));
+        return agreementSet && canPerform(_sender, DELAY_EXECUTION_ROLE, arr(_sender));
     }
 
     /**
