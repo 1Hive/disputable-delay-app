@@ -1,15 +1,13 @@
 pragma solidity ^0.4.24;
 
-import "@aragon/os/contracts/apps/AragonApp.sol";
-import "@aragon/os/contracts/common/IForwarder.sol";
-import "@aragon/os/contracts/lib/math/SafeMath64.sol";
-
 import "@aragon/os/contracts/apps/disputable/DisputableAragonApp.sol";
+import "@aragon/os/contracts/forwarding/IForwarderWithContext.sol";
+import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 
 /**
  * This app must be the first in a forwarding chain due to being Disputable and it's use of `msg.sender`
  */
-contract DisputableDelay is DisputableAragonApp, IForwarder {
+contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
     using SafeMath64 for uint64;
 
     /**
@@ -38,7 +36,7 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
         uint64 executionFromTime;
         uint64 pausedAt;
         DelayedScriptStatus delayedScriptStatus;
-        bytes evmCallScript;
+        bytes evmScript;
         uint256 actionId;
         address submitter;
     }
@@ -94,10 +92,10 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     /**
     * @notice Delays execution for `@transformTime(self.executionDelay(): uint)`
     * @param _context Information context for the script being scheduled
-    * @param _evmCallScript The script that can be executed after a delay
+    * @param _evmScript The script that can be executed after a delay
     */
-    function delayExecution(bytes _context, bytes _evmCallScript) external auth(DELAY_EXECUTION_ROLE) returns (uint256) {
-        return _delayExecution(_context, _evmCallScript);
+    function delayExecution(bytes _evmScript, bytes _context) external auth(DELAY_EXECUTION_ROLE) returns (uint256) {
+        return _delayExecution(_evmScript, _context);
     }
 
     /**
@@ -110,18 +108,19 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
     /**
     * @dev IForwarder interface conformance
     */
-    function canForward(address _sender, bytes) public view returns (bool) {
-        return canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
+    function canForward(address _sender, bytes _evmScript) external view returns (bool) {
+        return _canForward(_sender, _evmScript);
     }
 
     /**
     * @notice Delays execution for `@transformTime(self.executionDelay(): uint)`
     * @dev IForwarder interface conformance
-    * @param _evmCallScript The script that can be executed after a delay
+    * @param _evmScript The script that can be executed after a delay
+    * @param _context The delay context
     */
-    function forward(bytes _evmCallScript) public {
-        require(canForward(msg.sender, _evmCallScript), ERROR_CANNOT_FORWARD);
-        _delayExecution(new bytes(0), _evmCallScript);
+    function forward(bytes _evmScript, bytes _context) external {
+        require(_canForward(msg.sender, _evmScript), ERROR_CANNOT_FORWARD);
+        _delayExecution(_evmScript, _context);
     }
 
     /**
@@ -193,7 +192,7 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
 
         address[] memory blacklist = new address[](1);
         blacklist[0] = address(_getAgreement());
-        runScript(delayedScript.evmCallScript, new bytes(0), blacklist);
+        runScript(delayedScript.evmScript, new bytes(0), blacklist);
 
         emit ExecutedScript(_delayedScriptId, delayedScript.actionId);
     }
@@ -216,6 +215,15 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
         emit ExecutionCancelled(_delayedScriptId, delayedScript.actionId);
     }
 
+    function _canForward(address _sender, bytes) internal view returns (bool) {
+        bool activated = false;
+        if (_getAgreement() != IAgreement(0)) {
+            (activated,) = _getAgreement().getDisputableInfo(this);
+        }
+        // Note that `canPerform()` implicitly does an initialization check itself
+        return activated && canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
+    }
+
     /**
     * @notice Return whether a script with ID #`_scriptId` can be executed
     * @param _delayedScriptId The ID of the script to execute
@@ -229,15 +237,15 @@ contract DisputableDelay is DisputableAragonApp, IForwarder {
         emit ExecutionDelaySet(_executionDelay);
     }
 
-    function _delayExecution(bytes _context, bytes _evmCallScript) internal returns (uint256) {
+    function _delayExecution(bytes _evmScript, bytes _context) internal returns (uint256) {
         uint256 delayedScriptIndex = delayedScriptsNewIndex;
         delayedScriptsNewIndex++;
 
         uint256 actionId = _newAgreementAction(delayedScriptIndex, _context, msg.sender);
         delayedScripts[delayedScriptIndex] =
-            DelayedScript(getTimestamp64().add(executionDelay), 0, DelayedScriptStatus.Active, _evmCallScript, actionId, msg.sender);
+            DelayedScript(getTimestamp64().add(executionDelay), 0, DelayedScriptStatus.Active, _evmScript, actionId, msg.sender);
 
-        emit DelayedScriptStored(delayedScriptIndex, actionId, _evmCallScript);
+        emit DelayedScriptStored(delayedScriptIndex, actionId, _evmScript);
         return delayedScriptIndex;
     }
 

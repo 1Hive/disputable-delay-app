@@ -1,5 +1,5 @@
 {
-  "name": "@1hive/apps-delay",
+  "name": "@1hive/apps-disputable-delay",
   "version": "1.1.0",
   "description": "",
   "dependencies": {
@@ -11,8 +11,8 @@
   },
   "devDependencies": {
     "@aragon/buidler-aragon": "^0.2.7",
-    "@aragon/contract-helpers-test": "0.0.3",
-    "@aragon/staking": "^0.2.2",
+    "@aragon/contract-helpers-test": "^0.1.0-rc.2",
+    "@aragon/staking": "^0.2.4",
     "@nomiclabs/buidler": "^1.0.2",
     "@nomiclabs/buidler-etherscan": "^1.2.0",
     "@nomiclabs/buidler-solhint": "^1.2.0",
