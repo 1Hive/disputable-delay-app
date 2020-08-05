@@ -94,7 +94,9 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
     * @param _context Information context for the script being scheduled
     * @param _evmScript The script that can be executed after a delay
     */
-    function delayExecution(bytes _evmScript, bytes _context) external auth(DELAY_EXECUTION_ROLE) returns (uint256) {
+    function delayExecution(bytes _evmScript, bytes _context) external authP(DELAY_EXECUTION_ROLE, arr(msg.sender))
+        returns (uint256)
+    {
         return _delayExecution(_evmScript, _context);
     }
 
@@ -204,7 +206,7 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
     function cancelExecution(uint256 _delayedScriptId) external {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
 
-        bool senderHasPermission = canPerform(msg.sender, CANCEL_EXECUTION_ROLE, new uint256[](0));
+        bool senderHasPermission = canPerform(msg.sender, CANCEL_EXECUTION_ROLE, arr());
         require(delayedScript.submitter == msg.sender || senderHasPermission, ERROR_SENDER_CANNOT_CANCEL);
         require(delayedScript.delayedScriptStatus == DelayedScriptStatus.Active, ERROR_NOT_ACTIVE);
 
@@ -221,7 +223,7 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
             (activated,) = _getAgreement().getDisputableInfo(this);
         }
         // Note that `canPerform()` implicitly does an initialization check itself
-        return activated && canPerform(_sender, DELAY_EXECUTION_ROLE, arr());
+        return activated && canPerform(_sender, DELAY_EXECUTION_ROLE, arr(_sender));
     }
 
     /**
