@@ -12,7 +12,7 @@
   "devDependencies": {
     "@aragon/buidler-aragon": "^0.2.7",
     "@aragon/contract-helpers-test": "^0.1.0-rc.2",
-    "@aragon/staking": "^0.2.4",
+    "@aragon/staking": "^0.2.9",
     "@nomiclabs/buidler": "^1.0.2",
     "@nomiclabs/buidler-etherscan": "^1.2.0",
     "@nomiclabs/buidler-solhint": "^1.2.0",
@@ -28,6 +28,7 @@
     "start": "buidler start",
     "console": "buidler console",
     "compile": "buidler compile --force",
+    "compile:staking": "buidler compile --config buidler.config.staking.js",
     "devchain": "buidler node",
     "build": "cd app && npm run build",
     "lint": "buidler check && echo 'Lint complete.'",

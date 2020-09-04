@@ -188,7 +188,7 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
         require(_canExecute(delayedScript), ERROR_CANNOT_EXECUTE);
 
-        _closeAgreementAction(delayedScript.actionId);
+        _closeDisputableAction(delayedScript.actionId);
 
         delayedScript.delayedScriptStatus = DelayedScriptStatus.Executed;
 
@@ -212,7 +212,7 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
 
         delayedScript.delayedScriptStatus = DelayedScriptStatus.Cancelled;
 
-        _closeAgreementAction(delayedScript.actionId);
+        _closeDisputableAction(delayedScript.actionId);
 
         emit ExecutionCancelled(_delayedScriptId, delayedScript.actionId);
     }
@@ -240,7 +240,7 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
         uint256 delayedScriptIndex = delayedScriptsNewIndex;
         delayedScriptsNewIndex++;
 
-        uint256 actionId = _newAgreementAction(delayedScriptIndex, _context, msg.sender);
+        uint256 actionId = _registerDisputableAction(delayedScriptIndex, _context, msg.sender);
         delayedScripts[delayedScriptIndex] =
             DelayedScript(getTimestamp64().add(executionDelay), 0, DelayedScriptStatus.Active, _evmScript, actionId, msg.sender);
 

@@ -1,5 +1,5 @@
 {
-  "appName": "disputable-delay.aragonpm.eth",
+  "appName": "disputable-delay.open.aragonpm.eth",
   "path": "contracts/DisputableDelay.sol",
   "roles": [
     {
@@ -15,6 +15,11 @@
     {
       "name": "Cancel the script execution",
       "id": "CANCEL_EXECUTION_ROLE",
+      "params": []
+    },
+    {
+      "name": "Challenge executions",
+      "id": "CHALLENGE_ROLE",
       "params": []
     }
   ],
