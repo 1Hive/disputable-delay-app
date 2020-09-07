@@ -2,6 +2,7 @@ import 'core-js/stable'
 import 'regenerator-runtime/runtime'
 import { formatTime } from './lib/math-utils'
 import Aragon, { events } from '@aragon/api'
+import { describePath } from './lib/delay-utils'
 
 const app = new Aragon()
 
@@ -58,7 +59,7 @@ async function createStore() {
  ***********************/
 
 function initializeState() {
-  return async cachedState => {
+  return async (cachedState) => {
     const { executionDelay } = await getDelaySettings()
 
     executionDelay && app.identify(`Delay ${formatTime(executionDelay)}`)
@@ -98,7 +99,7 @@ async function newDelayedScript(state, { scriptId }, blockNumber, transactionHas
 
 async function updateDelayedScript(state, { scriptId }) {
   const { delayedScripts } = state
-  const index = delayedScripts.findIndex(script => script.scriptId === scriptId)
+  const index = delayedScripts.findIndex((script) => script.scriptId === scriptId)
 
   if (index < 0)
     return {
@@ -121,7 +122,7 @@ async function updateDelayedScript(state, { scriptId }) {
 
 function removeDelayedScript(state, { scriptId }) {
   const { delayedScripts } = state
-  const index = delayedScripts.findIndex(script => script.scriptId === scriptId)
+  const index = delayedScripts.findIndex((script) => script.scriptId === scriptId)
 
   const newDelayedScripts =
     index >= 0
@@ -149,33 +150,23 @@ async function getDelayedScript(scriptId) {
 
   let description = ''
   let executionTargets = []
+  let path = []
 
   try {
-    const path = await app.describeScript(evmCallScript).toPromise()
-
+    path = (await app.describeScript(evmCallScript).toPromise()) || []
+    description = describePath(path)
     executionTargets = [...new Set(path.map(({ to }) => to))]
-
-    description = path
-      ? path
-          .map(step => {
-            const identifier = step.identifier ? ` (${step.identifier})` : ''
-            const app = step.name ? `${step.name}${identifier}` : `${step.to}`
-
-            return `${app}: ${step.description || 'No description'}`
-          })
-          .join('\n')
-      : ''
   } catch (error) {
     console.error('Error describing script', error)
-    description = 'Invalid script. The result cannot be executed.'
   }
 
   return {
     scriptId,
-    executionTime: marshallDate(executionTime),
     executionDescription: description,
     executionTargets,
+    executionTime: marshallDate(executionTime),
     pausedAt: marshallDate(pausedAt),
+    path,
   }
 }
 
