@@ -1,0 +1,75 @@
+# Do not edit subgraph.yaml, this is a generated file.
+# Instead, edit subgraph.template.yaml and run `yarn manifest-<network>-[staging]`
+specVersion: 0.0.2
+description: A template for Aragon subgraphs
+repository: https://github.com/aragon/connect
+schema:
+  file: ./schema.graphql
+dataSources:
+{{> Organizations.yaml}}
+{{> OrganizationFactories.yaml}}
+{{> OrganizationTemplates.yaml}}
+{{> LegacyOrganizationTemplates.yaml}}
+{{> TokenFactories.yaml}}
+{{> Tokens.yaml}}
+templates:
+  {{> Kernel.template.yaml}}
+  {{> MiniMeToken.template.yaml}}
+  - kind: ethereum/contract
+    name: DisputableDelay
+    network: {{network}}
+    source:
+      abi: DisputableDelay
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.3
+      language: wasm/assemblyscript
+      entities:
+        - DisputableDelay
+        - Agreement
+        - ERC20
+      abis:
+        - name: DisputableDelay
+          file: ./abis/DisputableDelay.json
+        - name: Agreement
+          file: ./abis/Agreement.json
+        - name: ERC20
+          file: ./abis/MiniMeToken.json
+      eventHandlers:
+        - event: ExecutionDelaySet(indexed uint64)
+          handler: handleExecutionDelaySet
+        - event: DelayedScriptStored(indexed uint256,indexed uint256,bytes)
+          handler: handleDelayedScriptStored
+        - event: ExecutionPaused(indexed uint256,indexed uint256)
+          handler: handleExecutionPaused
+        - event: ExecutionResumed(indexed uint256,indexed uint256)
+          handler: handleExecutionResumed
+        - event: ExecutionCancelled(indexed uint256,indexed uint256)
+          handler: handleExecutionCancelled
+        - event: AgreementActionClosed(indexed uint256,indexed uint256)
+          handler: handleAgreementActionClosed
+        - event: ExecutedScript(indexed uint256,indexed uint256)
+          handler: handleExecutedScript
+      file: ./src/DisputableDelay.ts
+  - kind: ethereum/contract
+    name: Agreement
+    network: {{network}}
+    source:
+      abi: Agreement
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.3
+      language: wasm/assemblyscript
+      entities:
+        - Agreement
+      abis:
+        - name: Agreement
+          file: ./abis/Agreement.json
+      eventHandlers:
+        - event: ActionDisputed(indexed uint256,indexed uint256)
+          handler: handleActionDisputed
+        - event: ActionSettled(indexed uint256,indexed uint256)
+          handler: handleActionSettled
+        - event: ActionChallenged(indexed uint256,indexed uint256)
+          handler: handleActionChallenged
+      file: ./src/Agreement.ts
