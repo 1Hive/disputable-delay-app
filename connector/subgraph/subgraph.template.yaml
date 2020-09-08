@@ -42,13 +42,11 @@ templates:
           handler: handleDelayedScriptStored
         - event: ExecutionPaused(indexed uint256,indexed uint256)
           handler: handleExecutionPaused
-        - event: ExecutionResumed(indexed uint256,indexed uint256)
+        - event: ExecutionResumed(indexed uint256)
           handler: handleExecutionResumed
-        - event: ExecutionCancelled(indexed uint256,indexed uint256)
+        - event: ExecutionCancelled(indexed uint256)
           handler: handleExecutionCancelled
-        - event: AgreementActionClosed(indexed uint256,indexed uint256)
-          handler: handleAgreementActionClosed
-        - event: ExecutedScript(indexed uint256,indexed uint256)
+        - event: ExecutedScript(indexed uint256)
           handler: handleExecutedScript
       file: ./src/DisputableDelay.ts
   - kind: ethereum/contract

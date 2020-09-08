@@ -1,6 +1,8 @@
 enum DelayedScriptStatus {
   Active,
-  Paused,
+  Challenged,
+  Settled,
+  Disputed,
   Cancelled,
   Executed
 }
@@ -23,6 +25,7 @@ type DelayedScript @entity {
   evmScript: Bytes!
   actionId: BigInt!
   submitter: Bytes!
+  disputeId: BigInt!
   challengeId: BigInt!
   challenger: Bytes!
   challengeEndDate: BigInt!
@@ -55,4 +58,11 @@ type ERC20 @entity {
   name: String!
   symbol: String!
   decimals: Int!
+}
+
+type AragonInfo @entity {
+  id: ID!
+  orgs: [Bytes!]!
+  apps: [Bytes!]!
+  tokens: [Bytes!]!
 }

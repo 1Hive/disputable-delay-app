@@ -5,8 +5,8 @@ import "@aragon/os/contracts/forwarding/IForwarderWithContext.sol";
 import "@aragon/os/contracts/lib/math/SafeMath64.sol";
 
 /**
- * This app must be the first in a forwarding chain due to being Disputable and it's use of `msg.sender`
- */
+* This app must be the first in a forwarding chain due to being Disputable and it's use of `msg.sender`
+*/
 contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
     using SafeMath64 for uint64;
 
@@ -47,11 +47,10 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
 
     event ExecutionDelaySet(uint64 indexed executionDelay);
     event DelayedScriptStored(uint256 indexed delayedScriptId, uint256 indexed actionId, bytes evmScript);
-    event ExecutionPaused(uint256 indexed delayedScriptId, uint256 indexed actionId);
-    event ExecutionResumed(uint256 indexed delayedScriptId, uint256 indexed actionId);
-    event ExecutionCancelled(uint256 indexed delayedScriptId, uint256 indexed actionId);
-    event AgreementActionClosed(uint256 indexed delayedScriptId, uint256 indexed actionId);
-    event ExecutedScript(uint256 indexed delayedScriptId, uint256 indexed actionId);
+    event ExecutionPaused(uint256 indexed delayedScriptId, uint256 indexed challengeId);
+    event ExecutionResumed(uint256 indexed delayedScriptId);
+    event ExecutionCancelled(uint256 indexed delayedScriptId);
+    event ExecutedScript(uint256 indexed delayedScriptId);
 
     /**
     * @notice Initialize the Delay app
@@ -130,14 +129,14 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
     *      Note that this will only be called if Delay.canChallenge() returns true
     * @param _delayedScriptId The ID of the script execution to challenge
     */
-    function _onDisputableActionChallenged(uint256 _delayedScriptId, uint256 /* _challengeId */, address /* _challenger */)
+    function _onDisputableActionChallenged(uint256 _delayedScriptId, uint256 _challengeId, address /* _challenger */)
         internal
     {
         DelayedScript storage delayedScript = delayedScripts[_delayedScriptId];
         delayedScript.pausedAt = getTimestamp64();
         delayedScript.delayedScriptStatus = DelayedScriptStatus.Paused;
 
-        emit ExecutionPaused(_delayedScriptId, delayedScript.actionId);
+        emit ExecutionPaused(_delayedScriptId, _challengeId);
     }
 
     /**
@@ -153,7 +152,7 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
         delayedScript.executionFromTime = delayedScript.executionFromTime.add(timePaused);
         delayedScript.delayedScriptStatus = DelayedScriptStatus.Active;
 
-        emit ExecutionResumed(_delayedScriptId, delayedScript.actionId);
+        emit ExecutionResumed(_delayedScriptId);
     }
 
     /**
@@ -167,7 +166,7 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
 
         delayedScript.delayedScriptStatus = DelayedScriptStatus.Cancelled;
 
-        emit ExecutionCancelled(_delayedScriptId, delayedScript.actionId);
+        emit ExecutionCancelled(_delayedScriptId);
     }
 
     /**
@@ -196,7 +195,7 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
         blacklist[0] = address(_getAgreement());
         runScript(delayedScript.evmScript, new bytes(0), blacklist);
 
-        emit ExecutedScript(_delayedScriptId, delayedScript.actionId);
+        emit ExecutedScript(_delayedScriptId);
     }
 
     /**
@@ -214,7 +213,7 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
 
         _closeDisputableAction(delayedScript.actionId);
 
-        emit ExecutionCancelled(_delayedScriptId, delayedScript.actionId);
+        emit ExecutionCancelled(_delayedScriptId);
     }
 
     function _canForward(address _sender, bytes) internal view returns (bool) {
