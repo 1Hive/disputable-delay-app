@@ -110,7 +110,7 @@ modifier scriptExists(uint256 _scriptId) {
 
 ## Initialization
 
-The Delay app is initialized with the `_executionDealy` parameter. This defines the default length that a user will have to wait to execute a delayed script, provided it is not paused at some point during the delay.
+The Delay app is initialized with the `_executionDelay` parameter. This defines the default length that a user will have to wait to execute a delayed script, provided it is not paused at some point during the delay.
 
 ```
 /**
@@ -227,7 +227,7 @@ function execute(uint256 _delayedScriptId) external {
 
 ### delayExecution
 
-This is a wrapper for the `_delayExecution` function. This allows external accounts to forward an intent to delay the execution of a script, but only if they have the `DELAY_EXECUTOIN_ROLE`.
+This is a wrapper for the `_delayExecution` function. This allows external accounts to forward an intent to delay the execution of a script, but only if they have the `DELAY_EXECUTION_ROLE`.
 
 ```
 /**
