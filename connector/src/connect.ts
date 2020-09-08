@@ -1,5 +1,5 @@
 import { createAppConnector } from '@aragon/connect-core'
-import DisputableVoting from './models/DisputableVoting'
+import DisputableDelay from './models/DisputableDelay'
 import DisputableVotingConnectorTheGraph, {
   subgraphUrlFromChainId,
 } from './thegraph/connector'
@@ -9,7 +9,7 @@ type Config = {
   subgraphUrl?: string
 }
 
-export default createAppConnector<DisputableVoting, Config>(
+export default createAppConnector<DisputableDelay, Config>(
   ({ app, config, connector, network, orgConnector, verbose }) => {
     if (connector !== 'thegraph') {
       console.warn(
@@ -32,6 +32,6 @@ export default createAppConnector<DisputableVoting, Config>(
       verbose,
     })
 
-    return new DisputableVoting(connectorTheGraph, app.address)
+    return new DisputableDelay(connectorTheGraph, app.address)
   }
 )

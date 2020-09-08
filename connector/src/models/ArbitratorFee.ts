@@ -2,10 +2,10 @@ import { SubscriptionHandler } from '@aragon/connect-types'
 
 import ERC20 from './ERC20'
 import { formatBn } from '../helpers'
-import { ArbitratorFeeData, IDisputableVotingConnector } from '../types'
+import { ArbitratorFeeData, IDisputableDelayConnector } from '../types'
 
 export default class ArbitratorFee {
-  #connector: IDisputableVotingConnector
+  #connector: IDisputableDelayConnector
 
   readonly id: string
   readonly voteId: string
@@ -15,7 +15,7 @@ export default class ArbitratorFee {
 
   constructor(
     data: ArbitratorFeeData,
-    connector: IDisputableVotingConnector
+    connector: IDisputableDelayConnector
   ) {
     this.#connector = connector
 

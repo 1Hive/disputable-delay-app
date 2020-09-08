@@ -18,7 +18,7 @@ export function getTemplateForApp(appId: string): string | null {
   if (appId == AGREEMENT_OPEN || appId == AGREEMENT_PRECEDENCE_CAMPAIGN) {
     return 'Agreement'
   } else if (appId == DELAY_OPEN) {
-    return 'DisputableVoting'
+    return 'DisputableDelay'
   } else {
     return null
   }

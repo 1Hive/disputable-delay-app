@@ -5,7 +5,7 @@ import {
   ArbitratorFee,
   DisputableVoting,
   CollateralRequirement,
-  DisputableVotingConnectorTheGraph,
+  DisputableDelayConnectorTheGraph,
 } from '../../../src'
 
 const VOTING_APP_ADDRESS = '0x0e835020497b2cd716369f8fc713fb7bd0a22dbf'
@@ -16,7 +16,7 @@ describe('DisputableVoting', () => {
   let voting: DisputableVoting
 
   beforeAll(() => {
-    const connector = new DisputableVotingConnectorTheGraph({
+    const connector = new DisputableDelayConnectorTheGraph({
       subgraphUrl: VOTING_SUBGRAPH_URL,
     })
     voting = new DisputableVoting(connector, VOTING_APP_ADDRESS)

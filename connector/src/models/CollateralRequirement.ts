@@ -2,10 +2,10 @@ import { SubscriptionHandler } from '@aragon/connect-types'
 
 import ERC20 from './ERC20'
 import { formatBn } from '../helpers'
-import { CollateralRequirementData, IDisputableVotingConnector } from '../types'
+import { CollateralRequirementData, IDisputableDelayConnector } from '../types'
 
 export default class CollateralRequirement {
-  #connector: IDisputableVotingConnector
+  #connector: IDisputableDelayConnector
 
   readonly id: string
   readonly voteId: string
@@ -17,7 +17,7 @@ export default class CollateralRequirement {
 
   constructor(
     data: CollateralRequirementData,
-    connector: IDisputableVotingConnector
+    connector: IDisputableDelayConnector
   ) {
     this.#connector = connector
 

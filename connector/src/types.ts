@@ -4,83 +4,36 @@ import {
 } from '@aragon/connect-types'
 
 import ERC20 from './models/ERC20'
-import Vote from './models/Vote'
-import Voter from './models/Voter'
-import Setting from './models/Setting'
-import CastVote from './models/CastVote'
+import DelayedScript from './models/DelayedScript'
 import ArbitratorFee from './models/ArbitratorFee'
 import CollateralRequirement from './models/CollateralRequirement'
 
-export interface DisputableVotingData {
+export interface DisputableDelayData {
   id: string
   dao: string
-  token: string
-  currentSettingId: string
+  executionDelay: string
+  delayedScriptsNewIndex: string
 }
 
-export interface VoteData {
+export interface DelayedScriptData {
   id: string
-  votingId: string
-  voteId: string
-  creator: string
-  duration: string
-  quietEndingExtension: string
-  context: string
-  status: string
+  disputableDelayId: string
+  delayedScriptId: string
+  executionFromTime: string
+  pausedAt: string
+  delayedScriptStatus: string
+  evmScript: string
   actionId: string
+  submitter: string
+  disputeId: string
   challengeId: string
   challenger: string
   challengeEndDate: string
-  disputeId: string
-  settingId: string
-  startDate: string
-  totalPower: string
-  snapshotBlock: string
-  yeas: string
-  nays: string
-  pausedAt: string
-  pauseDuration: string
-  quietEndingExtensionDuration: string
-  quietEndingSnapshotSupport: string
-  script: string
   settledAt: string
   disputedAt: string
   executedAt: string
-  tokenDecimals: string
-  isAccepted: boolean
   submitterArbitratorFeeId: string
   challengerArbitratorFeeId: string
-}
-
-export interface CastVoteData {
-  id: string
-  voteId: string
-  voterId: string
-  caster: string
-  supports: boolean
-  stake: string
-  createdAt: string
-}
-
-export interface VoterData {
-  id: string
-  votingId: string
-  address: string
-  representative: string
-}
-
-export interface SettingData {
-  id: string
-  votingId: string
-  settingId: string
-  voteTime: string
-  supportRequiredPct: string
-  minimumAcceptanceQuorumPct: string
-  delegatedVotingPeriod: string
-  quietEndingPeriod: string
-  quietEndingExtension: string
-  executionDelay: string
-  createdAt: string
 }
 
 export interface CollateralRequirementData {
@@ -108,62 +61,24 @@ export interface ERC20Data {
   decimals: string
 }
 
-export interface IDisputableVotingConnector {
+export interface IDisputableDelayConnector {
   disconnect(): Promise<void>
-  disputableVoting(disputableVoting: string): Promise<DisputableVotingData>
-  onDisputableVoting(
-    disputableVoting: string,
-    callback: SubscriptionCallback<DisputableVotingData>
+  disputableDelay(disputableDelay: string): Promise<DisputableDelayData>
+  onDisputableDelay(
+    disputableDelay: string,
+    callback: SubscriptionCallback<DisputableDelayData>
   ): SubscriptionHandler
-  currentSetting(disputableVoting: string): Promise<Setting>
-  onCurrentSetting(
-    disputableVoting: string,
-    callback: SubscriptionCallback<Setting>
+  delayedExecution(delayedScriptId: string): Promise<DelayedScript>
+  onDelayedExecution(
+    delayedScriptId: string,
+    callback: SubscriptionCallback<DelayedScript>
   ): SubscriptionHandler
-  setting(settingId: string): Promise<Setting>
-  onSetting(
-    settingId: string,
-    callback: SubscriptionCallback<Setting>
-  ): SubscriptionHandler
-  settings(
-    disputableVoting: string,
-    first: number,
-    skip: number
-  ): Promise<Setting[]>
-  onSettings(
-    disputableVoting: string,
+  delayedExecutions(delayedScriptId: string, first: number, skip: number): Promise<DelayedScript[]>
+  onDelayedExecutions(
+    delayedScriptId: string,
     first: number,
     skip: number,
-    callback: SubscriptionCallback<Setting[]>
-  ): SubscriptionHandler
-  vote(voteId: string): Promise<Vote>
-  onVote(
-    voteId: string,
-    callback: SubscriptionCallback<Vote>
-  ): SubscriptionHandler
-  votes(disputableVoting: string, first: number, skip: number): Promise<Vote[]>
-  onVotes(
-    disputableVoting: string,
-    first: number,
-    skip: number,
-    callback: SubscriptionCallback<Vote[]>
-  ): SubscriptionHandler
-  castVote(castVoteId: string): Promise<CastVote | null>
-  onCastVote(
-    castVoteId: string,
-    callback: SubscriptionCallback<CastVote | null>
-  ): SubscriptionHandler
-  castVotes(voteId: string, first: number, skip: number): Promise<CastVote[]>
-  onCastVotes(
-    voteId: string,
-    first: number,
-    skip: number,
-    callback: SubscriptionCallback<CastVote[]>
-  ): SubscriptionHandler
-  voter(voterId: string): Promise<Voter>
-  onVoter(
-    voterId: string,
-    callback: SubscriptionCallback<Voter>
+    callback: SubscriptionCallback<DelayedScript[]>
   ): SubscriptionHandler
   collateralRequirement(voteId: string): Promise<CollateralRequirement>
   onCollateralRequirement(
