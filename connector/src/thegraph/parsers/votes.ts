@@ -1,93 +1,71 @@
 import { QueryResult } from '@aragon/connect-thegraph'
 
-import Vote from '../../models/Vote'
-import { VoteData } from '../../types'
+import { DelayedScriptData } from '../../types'
+import DelayedScript from "../../models/DelayedScript";
 
-function buildVote(vote: any, connector: any): Vote {
+function buildDelayedScript(delayedScript: any, connector: any): DelayedScript {
+
   const {
     id,
-    voting,
-    voteId,
-    creator,
-    context,
-    status,
+    disputableDelay,
+    delayedScriptId,
+    executionFromTime,
+    pausedAt,
+    delayedScriptStatus,
+    evmScript,
     actionId,
+    submitter,
+    disputeId,
     challengeId,
     challenger,
     challengeEndDate,
-    disputeId,
-    setting,
-    startDate,
-    totalPower,
-    snapshotBlock,
-    yeas,
-    nays,
-    pausedAt,
-    pauseDuration,
-    quietEndingExtensionDuration,
-    quietEndingSnapshotSupport,
-    script,
     settledAt,
     disputedAt,
     executedAt,
-    isAccepted,
     submitterArbitratorFee,
-    challengerArbitratorFee,
-  } = vote
+    challengerArbitratorFee
+  } = delayedScript
 
-  const voteData: VoteData = {
+  const delayedScriptData: DelayedScriptData = {
     id,
-    votingId: voting.id,
-    voteId,
-    creator,
-    duration: setting.voteTime,
-    quietEndingExtension: setting.quietEndingExtension,
-    context,
-    status,
+    disputableDelayId: disputableDelay.id,
+    delayedScriptId,
+    executionFromTime,
+    pausedAt,
+    delayedScriptStatus,
+    evmScript,
     actionId,
+    submitter,
+    disputeId,
     challengeId,
     challenger,
     challengeEndDate,
-    disputeId,
-    settingId: setting.id,
-    startDate,
-    totalPower,
-    snapshotBlock,
-    yeas,
-    nays,
-    pausedAt,
-    pauseDuration,
-    quietEndingExtensionDuration,
-    quietEndingSnapshotSupport,
-    script,
     settledAt,
     disputedAt,
     executedAt,
-    isAccepted,
-    tokenDecimals: voting.token.decimals,
     submitterArbitratorFeeId: submitterArbitratorFee ? submitterArbitratorFee.id : null,
     challengerArbitratorFeeId: challengerArbitratorFee ? challengerArbitratorFee.id : null
   }
 
-  return new Vote(voteData, connector)
+  return new DelayedScript(delayedScriptData, connector)
 }
 
-export function parseVote(result: QueryResult, connector: any): Vote {
-  const vote = result.data.vote
+export function parseDelayedScript(result: QueryResult, connector: any): DelayedScript {
+  const delayedScript = result.data.delayedScript
 
-  if (!vote) {
-    throw new Error('Unable to parse vote.')
+  if (!delayedScript) {
+    throw new Error('Unable to parse delayedScript.')
   }
 
-  return buildVote(vote, connector)
+  return buildDelayedScript(delayedScript, connector)
 }
 
-export function parseVotes(result: QueryResult, connector: any): Vote[] {
-  const votes = result.data.votes
+export function parseDelayedScripts(result: QueryResult, connector: any): DelayedScript[] {
+  const delayedScripts = result.data.delayedScripts
 
-  if (!votes) {
-    throw new Error('Unable to parse votes.')
+  if (!delayedScripts) {
+    throw new Error('Unable to parse delayedScripts.')
   }
 
-  return votes.map((vote: any) => buildVote(vote, connector))
+  return delayedScripts.map((delayedScript: any) => buildDelayedScript(delayedScript, connector))
 }

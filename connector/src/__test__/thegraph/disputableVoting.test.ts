@@ -22,7 +22,7 @@ describe('DisputableVoting', () => {
     let disputableVoting: DisputableVotingData
 
     beforeAll(async () => {
-      disputableVoting = await connector.disputableVoting(VOTING_APP_ADDRESS)
+      disputableVoting = await connector.disputableDelay(VOTING_APP_ADDRESS)
     })
 
     test('returns the disputable voting data', () => {

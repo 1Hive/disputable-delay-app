@@ -19,7 +19,7 @@ describe('DisputableDelay votes', () => {
 
   describe('vote', () => {
     test('returns the requested vote information', async () => {
-      const vote: Vote = await connector.vote(`${VOTING_APP_ADDRESS}-vote-3`)
+      const vote: Vote = await connector.delayedScript(`${VOTING_APP_ADDRESS}-vote-3`)
 
       expect(vote.id).toBe(`${VOTING_APP_ADDRESS}-vote-3`)
       expect(vote.voteId).toEqual('3')
@@ -42,7 +42,7 @@ describe('DisputableDelay votes', () => {
     })
 
     it('allows fetching the cast votes', async () => {
-      const vote: Vote = await connector.vote(`${VOTING_APP_ADDRESS}-vote-0`)
+      const vote: Vote = await connector.delayedScript(`${VOTING_APP_ADDRESS}-vote-0`)
 
       const castVotes: CastVote[] = await vote.castVotes()
       expect(castVotes.length).toBeGreaterThan(0)
@@ -64,7 +64,7 @@ describe('DisputableDelay votes', () => {
     let votes: Vote[]
 
     beforeAll(async () => {
-      votes = await connector.votes(VOTING_APP_ADDRESS, 1000, 0)
+      votes = await connector.delayedScripts(VOTING_APP_ADDRESS, 1000, 0)
     })
 
     test('returns a list of votes', () => {

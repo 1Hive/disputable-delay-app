@@ -4,30 +4,22 @@ import {
 } from '@aragon/connect-types'
 import { GraphQLWrapper, QueryResult } from '@aragon/connect-thegraph'
 
-import { DisputableVotingData, IDisputableVotingConnector } from '../types'
-import Vote from '../models/Vote'
-import Voter from '../models/Voter'
+import {DisputableDelayData, IDisputableDelayConnector} from '../types'
+import DelayedScript from "../models/DelayedScript";
 import ERC20 from '../models/ERC20'
-import Setting from '../models/Setting'
-import CastVote from '../models/CastVote'
 import ArbitratorFee from '../models/ArbitratorFee'
 import CollateralRequirement from '../models/CollateralRequirement'
 import * as queries from './queries'
 import {
-  parseSetting,
-  parseSettings,
-  parseCurrentSetting,
-  parseDisputableVoting,
+  parseDisputableDelay,
   parseERC20,
-  parseVoter,
-  parseVote,
-  parseVotes,
-  parseCastVote,
-  parseCastVotes,
+  parseDelayedScript,
+  parseDelayedScripts,
   parseArbitratorFee,
   parseCollateralRequirement,
 } from './parsers'
 
+// TODO: Update subgraph URL's
 export function subgraphUrlFromChainId(chainId: number) {
   if (chainId === 1) {
     return 'https://api.thegraph.com/subgraphs/name/aragon/aragon-dvoting-mainnet'
@@ -41,17 +33,17 @@ export function subgraphUrlFromChainId(chainId: number) {
   return null
 }
 
-type DisputableVotingConnectorTheGraphConfig = {
+type DisputableDelayConnectorTheGraphConfig = {
   pollInterval?: number
   subgraphUrl?: string
   verbose?: boolean
 }
 
-export default class DisputableVotingConnectorTheGraph
-  implements IDisputableVotingConnector {
+export default class DisputableDelayConnectorTheGraph
+  implements IDisputableDelayConnector {
   #gql: GraphQLWrapper
 
-  constructor(config: DisputableVotingConnectorTheGraphConfig) {
+  constructor(config: DisputableDelayConnectorTheGraphConfig) {
     if (!config.subgraphUrl) {
       throw new Error(
         'DisputableVotingConnectorTheGraph requires subgraphUrl to be passed.'
@@ -67,203 +59,71 @@ export default class DisputableVotingConnectorTheGraph
     this.#gql.close()
   }
 
-  async disputableVoting(
-    disputableVoting: string
-  ): Promise<DisputableVotingData> {
-    return this.#gql.performQueryWithParser<DisputableVotingData>(
+  async disputableDelay(
+      disputableDelay: string
+  ): Promise<DisputableDelayData> {
+    return this.#gql.performQueryWithParser<DisputableDelayData>(
       queries.GET_DISPUTABLE_VOTING('query'),
-      { disputableVoting },
-      (result: QueryResult) => parseDisputableVoting(result)
+      { disputableDelay },
+      (result: QueryResult) => parseDisputableDelay(result)
     )
   }
 
-  onDisputableVoting(
-    disputableVoting: string,
-    callback: SubscriptionCallback<DisputableVotingData>
+  onDisputableDelay(
+      disputableDelay: string,
+      callback: SubscriptionCallback<DisputableDelayData>
   ): SubscriptionHandler {
-    return this.#gql.subscribeToQueryWithParser<DisputableVotingData>(
+    return this.#gql.subscribeToQueryWithParser<DisputableDelayData>(
       queries.GET_DISPUTABLE_VOTING('subscription'),
-      { disputableVoting },
+      { disputableDelay },
       callback,
-      (result: QueryResult) => parseDisputableVoting(result)
+      (result: QueryResult) => parseDisputableDelay(result)
     )
   }
 
-  async currentSetting(disputableVoting: string): Promise<Setting> {
-    return this.#gql.performQueryWithParser<Setting>(
-      queries.GET_CURRENT_SETTING('query'),
-      { disputableVoting },
-      (result: QueryResult) => parseCurrentSetting(result)
-    )
-  }
-
-  onCurrentSetting(
-    disputableVoting: string,
-    callback: SubscriptionCallback<Setting>
-  ): SubscriptionHandler {
-    return this.#gql.subscribeToQueryWithParser<Setting>(
-      queries.GET_CURRENT_SETTING('subscription'),
-      { disputableVoting },
-      callback,
-      (result: QueryResult) => parseCurrentSetting(result)
-    )
-  }
-
-  async setting(settingId: string): Promise<Setting> {
-    return this.#gql.performQueryWithParser<Setting>(
-      queries.GET_SETTING('query'),
-      { settingId },
-      (result: QueryResult) => parseSetting(result)
-    )
-  }
-
-  onSetting(
-    settingId: string,
-    callback: SubscriptionCallback<Setting>
-  ): SubscriptionHandler {
-    return this.#gql.subscribeToQueryWithParser<Setting>(
-      queries.GET_SETTING('subscription'),
-      { settingId },
-      callback,
-      (result: QueryResult) => parseSetting(result)
-    )
-  }
-
-  async settings(
-    disputableVoting: string,
-    first: number,
-    skip: number
-  ): Promise<Setting[]> {
-    return this.#gql.performQueryWithParser<Setting[]>(
-      queries.ALL_SETTINGS('query'),
-      { disputableVoting, first, skip },
-      (result: QueryResult) => parseSettings(result)
-    )
-  }
-
-  onSettings(
-    disputableVoting: string,
-    first: number,
-    skip: number,
-    callback: SubscriptionCallback<Setting[]>
-  ): SubscriptionHandler {
-    return this.#gql.subscribeToQueryWithParser<Setting[]>(
-      queries.ALL_SETTINGS('subscription'),
-      { disputableVoting, first, skip },
-      callback,
-      (result: QueryResult) => parseSettings(result)
-    )
-  }
-
-  async vote(voteId: string): Promise<Vote> {
-    return this.#gql.performQueryWithParser<Vote>(
+  async delayedScript(delayedScriptId: string): Promise<DelayedScript> {
+    return this.#gql.performQueryWithParser<DelayedScript>(
       queries.GET_VOTE('query'),
-      { voteId },
-      (result: QueryResult) => parseVote(result, this)
+      { delayedScriptId },
+      (result: QueryResult) => parseDelayedScript(result, this)
     )
   }
 
-  onVote(
-    voteId: string,
-    callback: SubscriptionCallback<Vote>
+  onDelayedScript(
+    delayedScriptId: string,
+    callback: SubscriptionCallback<DelayedScript>
   ): SubscriptionHandler {
-    return this.#gql.subscribeToQueryWithParser<Vote>(
+    return this.#gql.subscribeToQueryWithParser<DelayedScript>(
       queries.GET_VOTE('subscription'),
-      { voteId },
+      { delayedScriptId },
       callback,
-      (result: QueryResult) => parseVote(result, this)
+      (result: QueryResult) => parseDelayedScript(result, this)
     )
   }
 
-  async votes(
-    disputableVoting: string,
+  async delayedScripts(
+    disputableDelay: string,
     first: number,
     skip: number
-  ): Promise<Vote[]> {
-    return this.#gql.performQueryWithParser<Vote[]>(
+  ): Promise<DelayedScript[]> {
+    return this.#gql.performQueryWithParser<DelayedScript[]>(
       queries.ALL_VOTES('query'),
-      { disputableVoting, first, skip },
-      (result: QueryResult) => parseVotes(result, this)
+      { disputableDelay, first, skip },
+      (result: QueryResult) => parseDelayedScripts(result, this)
     )
   }
 
-  onVotes(
-    disputableVoting: string,
+  onDelayedScripts(
+    disputableDelay: string,
     first: number,
     skip: number,
-    callback: SubscriptionCallback<Vote[]>
+    callback: SubscriptionCallback<DelayedScript[]>
   ): SubscriptionHandler {
-    return this.#gql.subscribeToQueryWithParser<Vote[]>(
+    return this.#gql.subscribeToQueryWithParser<DelayedScript[]>(
       queries.ALL_VOTES('subscription'),
-      { disputableVoting, first, skip },
+      { disputableDelay, first, skip },
       callback,
-      (result: QueryResult) => parseVotes(result, this)
-    )
-  }
-
-  async castVote(castVoteId: string): Promise<CastVote | null> {
-    return this.#gql.performQueryWithParser<CastVote | null>(
-      queries.GET_CAST_VOTE('query'),
-      { castVoteId },
-      (result: QueryResult) => parseCastVote(result, this)
-    )
-  }
-
-  onCastVote(
-    castVoteId: string,
-    callback: SubscriptionCallback<CastVote | null>
-  ): SubscriptionHandler {
-    return this.#gql.subscribeToQueryWithParser<CastVote | null>(
-      queries.GET_CAST_VOTE('subscription'),
-      { castVoteId },
-      callback,
-      (result: QueryResult) => parseCastVote(result, this)
-    )
-  }
-
-  async castVotes(
-    voteId: string,
-    first: number,
-    skip: number
-  ): Promise<CastVote[]> {
-    return this.#gql.performQueryWithParser<CastVote[]>(
-      queries.ALL_CAST_VOTES('query'),
-      { voteId, first, skip },
-      (result: QueryResult) => parseCastVotes(result, this)
-    )
-  }
-
-  onCastVotes(
-    voteId: string,
-    first: number,
-    skip: number,
-    callback: SubscriptionCallback<CastVote[]>
-  ): SubscriptionHandler {
-    return this.#gql.subscribeToQueryWithParser<CastVote[]>(
-      queries.ALL_CAST_VOTES('subscription'),
-      { voteId, first, skip },
-      callback,
-      (result: QueryResult) => parseCastVotes(result, this)
-    )
-  }
-
-  async voter(voterId: string): Promise<Voter> {
-    return this.#gql.performQueryWithParser<Voter>(
-      queries.GET_VOTER('query'),
-      { voterId },
-      (result: QueryResult) => parseVoter(result, this)
-    )
-  }
-
-  onVoter(
-    voterId: string,
-    callback: SubscriptionCallback<Voter>
-  ): SubscriptionHandler {
-    return this.#gql.subscribeToQueryWithParser<Voter>(
-      queries.GET_VOTER('subscription'),
-      { voterId },
-      callback,
-      (result: QueryResult) => parseVoter(result, this)
+      (result: QueryResult) => parseDelayedScripts(result, this)
     )
   }
 

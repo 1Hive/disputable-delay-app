@@ -1,6 +1,6 @@
 import { createAppConnector } from '@aragon/connect-core'
 import DisputableDelay from './models/DisputableDelay'
-import DisputableVotingConnectorTheGraph, {
+import DisputableDelayConnectorTheGraph, {
   subgraphUrlFromChainId,
 } from './thegraph/connector'
 
@@ -26,7 +26,7 @@ export default createAppConnector<DisputableDelay, Config>(
         config?.pollInterval ?? orgConnector.config?.pollInterval ?? undefined
     }
 
-    const connectorTheGraph = new DisputableVotingConnectorTheGraph({
+    const connectorTheGraph = new DisputableDelayConnectorTheGraph({
       pollInterval,
       subgraphUrl,
       verbose,
