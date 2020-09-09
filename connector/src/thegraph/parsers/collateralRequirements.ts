@@ -16,7 +16,7 @@ export function parseCollateralRequirement(
   return new CollateralRequirement(
     {
       id: collateralRequirement.id,
-      voteId: collateralRequirement.vote.id,
+      delayedScriptId: collateralRequirement.delayedScript.id,
       tokenId: collateralRequirement.token.id,
       tokenDecimals: collateralRequirement.token.decimals,
       actionAmount: collateralRequirement.actionAmount,

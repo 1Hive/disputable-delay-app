@@ -1,7 +1,7 @@
 import {
   SubscriptionCallback,
   SubscriptionHandler,
-} from '@aragon/connect-types'
+} from '../helpers/connect-types'
 
 import ERC20 from './models/ERC20'
 import DelayedScript from './models/DelayedScript'
@@ -38,7 +38,7 @@ export interface DelayedScriptData {
 
 export interface CollateralRequirementData {
   id: string
-  voteId: string
+  delayedScriptId: string
   tokenId: string
   tokenDecimals: string
   actionAmount: string
@@ -48,7 +48,7 @@ export interface CollateralRequirementData {
 
 export interface ArbitratorFeeData {
   id: string
-  voteId: string
+  delayedScriptId: string
   tokenId: string
   tokenDecimals: string
   amount: string
@@ -68,21 +68,21 @@ export interface IDisputableDelayConnector {
     disputableDelay: string,
     callback: SubscriptionCallback<DisputableDelayData>
   ): SubscriptionHandler
-  delayedExecution(delayedScriptId: string): Promise<DelayedScript>
-  onDelayedExecution(
+  delayedScript(delayedScriptId: string): Promise<DelayedScript>
+  onDelayedScript(
     delayedScriptId: string,
     callback: SubscriptionCallback<DelayedScript>
   ): SubscriptionHandler
-  delayedExecutions(delayedScriptId: string, first: number, skip: number): Promise<DelayedScript[]>
-  onDelayedExecutions(
+  delayedScripts(delayedScriptId: string, first: number, skip: number): Promise<DelayedScript[]>
+  onDelayedScripts(
     delayedScriptId: string,
     first: number,
     skip: number,
     callback: SubscriptionCallback<DelayedScript[]>
   ): SubscriptionHandler
-  collateralRequirement(voteId: string): Promise<CollateralRequirement>
+  collateralRequirement(delayedScriptId: string): Promise<CollateralRequirement>
   onCollateralRequirement(
-    voteId: string,
+    delayedScriptId: string,
     callback: SubscriptionCallback<CollateralRequirement>
   ): SubscriptionHandler
   arbitratorFee(arbitratorFeeId: string): Promise<ArbitratorFee | null>

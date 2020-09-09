@@ -2,7 +2,7 @@ import {
   Address,
   SubscriptionCallback,
   SubscriptionResult,
-} from '@aragon/connect-types'
+} from '../helpers/connect-types'
 import { subscription } from '@aragon/connect-core'
 import { IDisputableDelayConnector } from '../types'
 import DelayedScript from "./DelayedScript"
@@ -40,29 +40,29 @@ export default class DisputableDelay {
     return data.delayedScriptsNewIndex
   }
 
-  async delayedExecution(delayedExecutionId: string): Promise<DelayedScript> {
-    return this.#connector.delayedExecution(delayedExecutionId)
+  async delayedScript(delayedExecutionId: string): Promise<DelayedScript> {
+    return this.#connector.delayedScript(delayedExecutionId)
   }
 
-  onDelayedExecution(
+  onDelayedScript(
     delayedExecutionId: string,
     callback?: SubscriptionCallback<DelayedScript>
   ): SubscriptionResult<DelayedScript> {
     return subscription<DelayedScript>(callback, (callback) =>
-      this.#connector.onDelayedExecution(delayedExecutionId, callback)
+      this.#connector.onDelayedScript(delayedExecutionId, callback)
     )
   }
 
-  async delayedExecutions({ first = 1000, skip = 0 } = {}): Promise<DelayedScript[]> {
-    return this.#connector.delayedExecutions(this.#address, first, skip)
+  async delayedScripts({ first = 1000, skip = 0 } = {}): Promise<DelayedScript[]> {
+    return this.#connector.delayedScripts(this.#address, first, skip)
   }
 
-  onDelayedExecutions(
+  onDelayedScripts(
     { first = 1000, skip = 0 } = {},
     callback?: SubscriptionCallback<DelayedScript[]>
   ): SubscriptionResult<DelayedScript[]> {
     return subscription<DelayedScript[]>(callback, (callback) =>
-      this.#connector.onDelayedExecutions(this.#address, first, skip, callback)
+      this.#connector.onDelayedScripts(this.#address, first, skip, callback)
     )
   }
 }

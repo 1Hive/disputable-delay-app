@@ -15,7 +15,7 @@ export function parseArbitratorFee(
   return new ArbitratorFee(
     {
       id: arbitratorFee.id,
-      voteId: arbitratorFee.vote.id,
+      delayedScriptId: arbitratorFee.delayedScript.id,
       tokenId: arbitratorFee.token.id,
       tokenDecimals: arbitratorFee.token.decimals,
       amount: arbitratorFee.amount

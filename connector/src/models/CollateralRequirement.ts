@@ -1,4 +1,4 @@
-import { SubscriptionHandler } from '@aragon/connect-types'
+import { SubscriptionHandler } from '../helpers/connect-types'
 
 import ERC20 from './ERC20'
 import { formatBn } from '../helpers'

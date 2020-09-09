@@ -24,7 +24,7 @@ export function handleExecutionDelaySet(event: ExecutionDelaySetEvent): void {
     const executionDelay = delayContract.executionDelay()
 
     const delay = loadOrCreateDelay(event.address)
-    delay.executiongDelay = executionDelay
+    delay.executionDelay = executionDelay
     delay.save()
 }
 

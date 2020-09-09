@@ -1,122 +1,37 @@
 import gql from 'graphql-tag'
 
-export const GET_DISPUTABLE_VOTING = (type: string) => gql`
-  ${type} DisputableVoting($disputableVoting: String!) {
-    disputableVoting(id: $disputableVoting) {
+export const GET_DISPUTABLE_DELAY = (type: string) => gql`
+  ${type} DisputableDelay($disputableDelay: String!) {
+    disputableVoting(id: $disputableDelay) {
       id
       dao
-      token {
-        id      
-      }
-      setting {
-        id
-      }
-    }
-  }
-`
-
-export const GET_CURRENT_SETTING = (type: string) => gql`
-  ${type} DisputableVoting($disputableVoting: String!) {
-    disputableVoting(id: $disputableVoting) {
-      setting {
-        id
-        settingId
-        voteTime
-        supportRequiredPct
-        minimumAcceptanceQuorumPct
-        delegatedVotingPeriod
-        quietEndingPeriod
-        quietEndingExtension
-        executionDelay
-        createdAt
-        voting {
-          id
-        }
-      }
-    }
-  }
-`
-
-export const GET_SETTING = (type: string) => gql`
-  ${type} Setting($settingId: String!) {
-    setting(id: $settingId) {
-      id
-      settingId
-      voteTime
-      supportRequiredPct
-      minimumAcceptanceQuorumPct
-      delegatedVotingPeriod
-      quietEndingPeriod
-      quietEndingExtension
       executionDelay
-      createdAt
-      voting {
-        id
-      }
+      delayedScriptsNewIndex
     }
   }
 `
 
-export const ALL_SETTINGS = (type: string) => gql`
-  ${type} Settings($disputableVoting: String!, $first: Int!, $skip: Int!) {
-    settings(where: {
-      voting: $disputableVoting
-    }, first: $first, skip: $skip) {
+export const GET_DELAYED_SCRIPT = (type: string) => gql`
+  ${type} DelayedScript($delayedScriptId: String!) {
+    vote(id: $delayedScriptId) {
       id
-      settingId
-      voteTime
-      supportRequiredPct
-      minimumAcceptanceQuorumPct
-      delegatedVotingPeriod
-      quietEndingPeriod
-      quietEndingExtension
-      executionDelay
-      createdAt
-      voting {
+      disputableDelay { 
         id
       }
-    }
-  }
-`
-
-export const GET_VOTE = (type: string) => gql`
-  ${type} Vote($voteId: String!) {
-    vote(id: $voteId) {
-      id
-      voting { 
-        id 
-        token {
-          decimals
-        }
-      }
-      voteId
-      creator
-      context
-      status
+      delayedScriptId
+      executionFromTime
+      pausedAt
+      delayedScriptStatus
+      evmScript
       actionId
+      submitter
+      disputeId
       challengeId
       challenger
       challengeEndDate
-      disputeId
-      setting { 
-        id 
-        voteTime
-        quietEndingExtension
-      }
-      startDate
-      totalPower
-      snapshotBlock
-      yeas
-      nays
-      pausedAt
-      pauseDuration
-      quietEndingExtensionDuration
-      quietEndingSnapshotSupport
-      script
       settledAt
       disputedAt
       executedAt
-      isAccepted
       submitterArbitratorFee {
         id
       }
@@ -127,101 +42,33 @@ export const GET_VOTE = (type: string) => gql`
   }
 `
 
-export const ALL_VOTES = (type: string) => gql`
-  ${type} Votes($disputableVoting: String!, $first: Int!, $skip: Int!) {
-    votes(where: {
-      voting: $disputableVoting
+export const ALL_DELAYED_SCRIPTS = (type: string) => gql`
+  ${type} DelayedScripts($disputableDelay: String!, $first: Int!, $skip: Int!) {
+    delayedScripts(where: {
+      disputableDelay: $disputableDelay
     }, orderBy: startDate, orderDirection: asc, first: $first, skip: $skip) {
       id
-      voting { 
-        id 
-        token {
-          decimals
-        }
+      disputableDelay { 
+        id
       }
-      voteId
-      creator
-      context
-      status
+      delayedScriptId
+      executionFromTime
+      pausedAt
+      delayedScriptStatus
+      evmScript
       actionId
+      submitter
+      disputeId
       challengeId
       challenger
       challengeEndDate
-      disputeId
-      setting { 
-        id 
-        voteTime
-        quietEndingExtension
-      }
-      startDate
-      totalPower
-      snapshotBlock
-      yeas
-      nays
-      pausedAt
-      pauseDuration
-      quietEndingExtensionDuration
-      quietEndingSnapshotSupport
-      script
       settledAt
       disputedAt
       executedAt
-      isAccepted
       submitterArbitratorFee {
         id
       }
       challengerArbitratorFee {
-        id  
-      }
-    }
-  }
-`
-
-export const GET_CAST_VOTE = (type: string) => gql`
-  ${type} CastVote($castVoteId: String!) {
-    castVote(id: $castVoteId) {
-      id
-      vote { 
-        id 
-      }
-      voter { 
-        id
-      }
-      caster
-      supports
-      stake
-      createdAt
-    }
-  }
-`
-
-export const ALL_CAST_VOTES = (type: string) => gql`
-  ${type} CastVotes($voteId: ID!, $first: Int!, $skip: Int!) {
-    castVotes(where: {
-      vote: $voteId
-    }, first: $first, skip: $skip) {
-      id
-      vote { 
-        id 
-      }
-      voter { 
-        id 
-      }
-      caster
-      supports
-      stake
-      createdAt
-    }
-  }
-`
-
-export const GET_VOTER = (type: string) => gql`
-  ${type} Voter($voterId: String!) {
-    voter(id: $voterId) {
-      id
-      address
-      representative
-      voting { 
         id
       }
     }
@@ -229,14 +76,14 @@ export const GET_VOTER = (type: string) => gql`
 `
 
 export const GET_COLLATERAL_REQUIREMENT = (type: string) => gql`
-  ${type} CollateralRequirement($voteId: String!) {
-    vote(id: $voteId) {
+  ${type} CollateralRequirement($delayedScriptId: String!) {
+    delayedScript(id: $delayedScriptId) {
       collateralRequirement {
         id
         actionAmount
         challengeAmount
         challengeDuration
-        vote {
+        delayedScript {
           id
         }
         token {

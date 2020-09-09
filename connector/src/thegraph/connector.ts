@@ -1,7 +1,7 @@
 import {
   SubscriptionCallback,
   SubscriptionHandler,
-} from '@aragon/connect-types'
+} from '../helpers/connect-types'
 import { GraphQLWrapper, QueryResult } from '@aragon/connect-thegraph'
 
 import {DisputableDelayData, IDisputableDelayConnector} from '../types'
@@ -46,7 +46,7 @@ export default class DisputableDelayConnectorTheGraph
   constructor(config: DisputableDelayConnectorTheGraphConfig) {
     if (!config.subgraphUrl) {
       throw new Error(
-        'DisputableVotingConnectorTheGraph requires subgraphUrl to be passed.'
+        'DisputableDelayConnectorTheGraph requires subgraphUrl to be passed.'
       )
     }
     this.#gql = new GraphQLWrapper(config.subgraphUrl, {
@@ -63,7 +63,7 @@ export default class DisputableDelayConnectorTheGraph
       disputableDelay: string
   ): Promise<DisputableDelayData> {
     return this.#gql.performQueryWithParser<DisputableDelayData>(
-      queries.GET_DISPUTABLE_VOTING('query'),
+      queries.GET_DISPUTABLE_DELAY('query'),
       { disputableDelay },
       (result: QueryResult) => parseDisputableDelay(result)
     )
@@ -74,7 +74,7 @@ export default class DisputableDelayConnectorTheGraph
       callback: SubscriptionCallback<DisputableDelayData>
   ): SubscriptionHandler {
     return this.#gql.subscribeToQueryWithParser<DisputableDelayData>(
-      queries.GET_DISPUTABLE_VOTING('subscription'),
+      queries.GET_DISPUTABLE_DELAY('subscription'),
       { disputableDelay },
       callback,
       (result: QueryResult) => parseDisputableDelay(result)
@@ -83,7 +83,7 @@ export default class DisputableDelayConnectorTheGraph
 
   async delayedScript(delayedScriptId: string): Promise<DelayedScript> {
     return this.#gql.performQueryWithParser<DelayedScript>(
-      queries.GET_VOTE('query'),
+      queries.GET_DELAYED_SCRIPT('query'),
       { delayedScriptId },
       (result: QueryResult) => parseDelayedScript(result, this)
     )
@@ -94,7 +94,7 @@ export default class DisputableDelayConnectorTheGraph
     callback: SubscriptionCallback<DelayedScript>
   ): SubscriptionHandler {
     return this.#gql.subscribeToQueryWithParser<DelayedScript>(
-      queries.GET_VOTE('subscription'),
+      queries.GET_DELAYED_SCRIPT('subscription'),
       { delayedScriptId },
       callback,
       (result: QueryResult) => parseDelayedScript(result, this)
@@ -107,7 +107,7 @@ export default class DisputableDelayConnectorTheGraph
     skip: number
   ): Promise<DelayedScript[]> {
     return this.#gql.performQueryWithParser<DelayedScript[]>(
-      queries.ALL_VOTES('query'),
+      queries.ALL_DELAYED_SCRIPTS('query'),
       { disputableDelay, first, skip },
       (result: QueryResult) => parseDelayedScripts(result, this)
     )
@@ -120,28 +120,28 @@ export default class DisputableDelayConnectorTheGraph
     callback: SubscriptionCallback<DelayedScript[]>
   ): SubscriptionHandler {
     return this.#gql.subscribeToQueryWithParser<DelayedScript[]>(
-      queries.ALL_VOTES('subscription'),
+      queries.ALL_DELAYED_SCRIPTS('subscription'),
       { disputableDelay, first, skip },
       callback,
       (result: QueryResult) => parseDelayedScripts(result, this)
     )
   }
 
-  async collateralRequirement(voteId: string): Promise<CollateralRequirement> {
+  async collateralRequirement(delayedScriptId: string): Promise<CollateralRequirement> {
     return this.#gql.performQueryWithParser<CollateralRequirement>(
       queries.GET_COLLATERAL_REQUIREMENT('query'),
-      { voteId },
+      { delayedScriptId },
       (result: QueryResult) => parseCollateralRequirement(result, this)
     )
   }
 
   onCollateralRequirement(
-    voteId: string,
+    delayedScriptId: string,
     callback: SubscriptionCallback<CollateralRequirement>
   ): SubscriptionHandler {
     return this.#gql.subscribeToQueryWithParser<CollateralRequirement>(
       queries.GET_COLLATERAL_REQUIREMENT('subscription'),
-      { voteId },
+      { delayedScriptId },
       callback,
       (result: QueryResult) => parseCollateralRequirement(result, this)
     )

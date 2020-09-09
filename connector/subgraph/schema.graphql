@@ -10,7 +10,7 @@ enum DelayedScriptStatus {
 type DisputableDelay @entity {
   id: ID!
   dao: Bytes!
-  executiongDelay: BigInt!
+  executionDelay: BigInt!
   delayedScriptsNewIndex: BigInt!
   delayedScripts: [DelayedScript!] @derivedFrom(field: "disputableDelay")
 }

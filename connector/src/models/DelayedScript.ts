@@ -1,7 +1,7 @@
 import {
   SubscriptionCallback,
   SubscriptionResult,
-} from '@aragon/connect-types'
+} from '../helpers/connect-types'
 import { subscription } from '@aragon/connect-core'
 import { DelayedScriptData, IDisputableDelayConnector } from '../types'
 import ArbitratorFee from './ArbitratorFee'
