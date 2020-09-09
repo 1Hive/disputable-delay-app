@@ -1,11 +1,10 @@
 import { BigInt, Address } from '@graphprotocol/graph-ts'
-import { ERC20 as ERC20Contract } from '../generated/templates/DisputableDelay/ERC20'
 import { Agreement as AgreementContract } from '../generated/templates/Agreement/Agreement'
+import { ERC20 as ERC20Contract } from '../generated/templates/DisputableDelay/ERC20'
 import {
     DisputableDelay as DisputableDelayEntity,
     DelayedScript as DelayedScriptEntity,
     ERC20 as ERC20Entity,
-    CollateralRequirement as CollateralRequirementEntity
 } from '../generated/schema'
 import {
     DisputableDelay as DelayContract,
@@ -21,14 +20,15 @@ import {
 
 export function handleExecutionDelaySet(event: ExecutionDelaySetEvent): void {
     const delayContract = DelayContract.bind(event.address)
-    const executionDelay = delayContract.executionDelay()
-
     const delay = loadOrCreateDelay(event.address)
-    delay.executionDelay = executionDelay
+    delay.executionDelay = delayContract.executionDelay()
+    delay.delayedScriptsNewIndex = delayContract.delayedScriptsNewIndex()
     delay.save()
 }
 
 export function handleDelayedScriptStored(event: DelayedScriptStoredEvent): void {
+    const disputableDelay = loadOrCreateDelay(event.address)
+
     const delayedScriptId = buildDelayedScriptId(event.address, event.params.delayedScriptId)
     const delayedScript = new DelayedScriptEntity(delayedScriptId)
 
@@ -48,19 +48,8 @@ export function handleDelayedScriptStored(event: DelayedScriptStoredEvent): void
     delayedScript.settledAt = BigInt.fromI32(0)
     delayedScript.disputedAt = BigInt.fromI32(0)
     delayedScript.executedAt = BigInt.fromI32(0)
+    delayedScript.collateralRequirement = disputableDelay.collateralRequirement
     delayedScript.save()
-
-    const agreementContract = AgreementContract.bind(delayContract.getAgreement())
-    const actionData = agreementContract.getAction(delayedScript.actionId)
-    const collateralRequirementData = agreementContract.getCollateralRequirement(event.address, actionData.value2)
-    const collateralRequirement = new CollateralRequirementEntity(delayedScriptId)
-
-    collateralRequirement.delayedScript = delayedScriptId
-    collateralRequirement.token = buildERC20(collateralRequirementData.value0)
-    collateralRequirement.challengeDuration = collateralRequirementData.value1
-    collateralRequirement.actionAmount = collateralRequirementData.value2
-    collateralRequirement.challengeAmount = collateralRequirementData.value3
-    collateralRequirement.save()
 }
 
 export function handleExecutionPaused(event: ExecutionPausedEvent): void {
@@ -105,7 +94,7 @@ export function updateDelayedScript(delayAddress: Address, delayedScriptId: BigI
 }
 
 export function buildDelayedScriptId(delay: Address, delayedScriptId: BigInt): string {
-    return delay.toHexString() + "-vote-" + delayedScriptId.toString()
+    return delay.toHexString() + "-delayedscript-" + delayedScriptId.toString()
 }
 
 function loadOrCreateDelay(delayAddress: Address): DisputableDelayEntity {

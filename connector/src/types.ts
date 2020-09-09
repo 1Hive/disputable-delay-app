@@ -1,7 +1,7 @@
 import {
   SubscriptionCallback,
   SubscriptionHandler,
-} from '../helpers/connect-types'
+} from './helpers/connect-types'
 
 import ERC20 from './models/ERC20'
 import DelayedScript from './models/DelayedScript'

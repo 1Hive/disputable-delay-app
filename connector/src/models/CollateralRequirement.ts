@@ -8,7 +8,7 @@ export default class CollateralRequirement {
   #connector: IDisputableDelayConnector
 
   readonly id: string
-  readonly voteId: string
+  readonly delayedScriptId: string
   readonly tokenId: string
   readonly tokenDecimals: string
   readonly actionAmount: string
@@ -22,7 +22,7 @@ export default class CollateralRequirement {
     this.#connector = connector
 
     this.id = data.id
-    this.voteId = data.voteId
+    this.delayedScriptId = data.delayedScriptId
     this.tokenId = data.tokenId
     this.tokenDecimals = data.tokenDecimals
     this.actionAmount = data.actionAmount

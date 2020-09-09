@@ -12,6 +12,7 @@ type DisputableDelay @entity {
   dao: Bytes!
   executionDelay: BigInt!
   delayedScriptsNewIndex: BigInt!
+  collateralRequirement: CollateralRequirement!
   delayedScripts: [DelayedScript!] @derivedFrom(field: "disputableDelay")
 }
 
@@ -34,12 +35,13 @@ type DelayedScript @entity {
   executedAt: BigInt!
   submitterArbitratorFee: ArbitratorFee
   challengerArbitratorFee: ArbitratorFee
-  collateralRequirement: CollateralRequirement! @derivedFrom(field: "delayedScript")
+  collateralRequirement: CollateralRequirement!
 }
 
 type CollateralRequirement @entity {
   id: ID!
-  delayedScript: DelayedScript!
+  disputableDelay: DisputableDelay!
+  collateralRequirementId: BigInt!
   token: ERC20!
   actionAmount: BigInt!
   challengeAmount: BigInt!

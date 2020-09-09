@@ -17,3 +17,6 @@ yarn.lock
 /artifacts
 /cache
 app/.cache
+
+connector/coverage
+connector/dist
