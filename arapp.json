@@ -10,7 +10,9 @@
     {
       "name": "Delay execution",
       "id": "DELAY_EXECUTION_ROLE",
-      "params": []
+      "params": [
+        "Sender address"
+      ]
     },
     {
       "name": "Cancel the script execution",

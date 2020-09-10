@@ -12,7 +12,7 @@ type DisputableDelay @entity {
   dao: Bytes!
   executionDelay: BigInt!
   delayedScriptsNewIndex: BigInt!
-  collateralRequirement: CollateralRequirement!
+  collateralRequirement: CollateralRequirement
   delayedScripts: [DelayedScript!] @derivedFrom(field: "disputableDelay")
 }
 

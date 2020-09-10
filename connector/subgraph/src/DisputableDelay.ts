@@ -42,6 +42,8 @@ export function handleDelayedScriptStored(event: DelayedScriptStoredEvent): void
     delayedScript.delayedScriptStatus = delayedScriptStatus(delayedScriptData.value2)
     delayedScript.evmScript = delayedScriptData.value3
     delayedScript.actionId = delayedScriptData.value4
+    delayedScript.submitter = delayedScriptData.value5
+    delayedScript.disputeId = BigInt.fromI32(0)
     delayedScript.challengeId = BigInt.fromI32(0)
     delayedScript.challenger = Address.fromString('0x0000000000000000000000000000000000000000')
     delayedScript.challengeEndDate = BigInt.fromI32(0)
@@ -50,6 +52,9 @@ export function handleDelayedScriptStored(event: DelayedScriptStoredEvent): void
     delayedScript.executedAt = BigInt.fromI32(0)
     delayedScript.collateralRequirement = disputableDelay.collateralRequirement
     delayedScript.save()
+
+    disputableDelay.delayedScriptsNewIndex = delayContract.delayedScriptsNewIndex()
+    disputableDelay.save()
 }
 
 export function handleExecutionPaused(event: ExecutionPausedEvent): void {

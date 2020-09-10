@@ -5,16 +5,16 @@ import {DisputableDelayData} from '../../types'
 export function parseDisputableDelay(
   result: QueryResult
 ): DisputableDelayData {
-  const disputableVoting = result.data.disputableDelay
+  const disputableDelay = result.data.disputableDelay
 
-  if (!disputableVoting) {
+  if (!disputableDelay) {
     throw new Error('Unable to parse disputable delay.')
   }
 
   return {
-    id: disputableVoting.id,
-    dao: disputableVoting.dao,
-    executionDelay: disputableVoting.executionDelay,
-    delayedScriptsNewIndex: disputableVoting.delayedScriptsNewIndex,
+    id: disputableDelay.id,
+    dao: disputableDelay.dao,
+    executionDelay: disputableDelay.executionDelay,
+    delayedScriptsNewIndex: disputableDelay.delayedScriptsNewIndex,
   }
 }

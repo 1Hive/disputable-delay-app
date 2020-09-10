@@ -2,7 +2,7 @@ import gql from 'graphql-tag'
 
 export const GET_DISPUTABLE_DELAY = (type: string) => gql`
   ${type} DisputableDelay($disputableDelay: String!) {
-    disputableVoting(id: $disputableDelay) {
+    disputableDelay(id: $disputableDelay) {
       id
       dao
       executionDelay

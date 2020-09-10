@@ -21,15 +21,15 @@ import {
 
 // TODO: Update subgraph URL's
 export function subgraphUrlFromChainId(chainId: number) {
-  if (chainId === 1) {
-    return 'https://api.thegraph.com/subgraphs/name/aragon/aragon-dvoting-mainnet'
-  }
+  // if (chainId === 1) {
+  //   return '???'
+  // }
   if (chainId === 4) {
     return 'https://api.thegraph.com/subgraphs/name/aragon/aragon-dvoting-rinkeby'
   }
-  if (chainId === 100) {
-    return 'https://api.thegraph.com/subgraphs/name/aragon/aragon-dvoting-xdai'
-  }
+  // if (chainId === 100) {
+  //   return '???'
+  // }
   return null
 }
 

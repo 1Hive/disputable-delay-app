@@ -1,16 +1,16 @@
-import { DisputableVotingData } from '../../types'
+import { DisputableDelayData } from '../../types'
 import { DisputableDelayConnectorTheGraph } from '../../../src'
 
-const VOTING_APP_ADDRESS = '0x0e835020497b2cd716369f8fc713fb7bd0a22dbf'
-const VOTING_SUBGRAPH_URL =
-  'https://api.thegraph.com/subgraphs/name/facuspagnuolo/aragon-dvoting-rinkeby-staging'
+const DISPUTABLE_DELAY_ADDRESS = '0xfd59F7557FA408Ea125f8b07E7d3747BA477f8d4'
+const DELAY_SUBGRAPH_URL =
+  'https://api.thegraph.com/subgraphs/name/1hive/aragon-disputable-delay-rinkeby'
 
 describe('DisputableVoting', () => {
   let connector: DisputableDelayConnectorTheGraph
 
   beforeAll(() => {
     connector = new DisputableDelayConnectorTheGraph({
-      subgraphUrl: VOTING_SUBGRAPH_URL,
+      subgraphUrl: DELAY_SUBGRAPH_URL,
     })
   })
 
@@ -19,19 +19,22 @@ describe('DisputableVoting', () => {
   })
 
   describe('data', () => {
-    let disputableVoting: DisputableVotingData
+    let disputableVoting: DisputableDelayData
 
     beforeAll(async () => {
-      disputableVoting = await connector.disputableDelay(VOTING_APP_ADDRESS)
+      disputableVoting = await connector.disputableDelay(DISPUTABLE_DELAY_ADDRESS)
     })
 
     test('returns the disputable voting data', () => {
-      expect(disputableVoting.id).toBe(VOTING_APP_ADDRESS)
+      expect(disputableVoting.id).toBe(DISPUTABLE_DELAY_ADDRESS)
       expect(disputableVoting.dao).toBe(
-        '0x51a41e43af0774565f0be5cebc50c693cc19e4ee'
+        '0xcd4016b1482a99929beaa6c1a004235ea12b8732'
       )
-      expect(disputableVoting.token).toBe(
-        '0x9a8eab8a356b8af4fa6ea5be983539ce97a258fb'
+      expect(disputableVoting.executionDelay).toBe(
+        '1000'
+      )
+      expect(disputableVoting.delayedScriptsNewIndex).toBe(
+        '3'
       )
     })
   })
