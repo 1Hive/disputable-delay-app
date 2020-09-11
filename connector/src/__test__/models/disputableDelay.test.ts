@@ -7,11 +7,6 @@ import {
   CollateralRequirement,
   DisputableDelayConnectorTheGraph,
 } from '../../../src'
-import {
-  DisputableVoting,
-  DisputableVotingConnectorTheGraph
-} from "../../../../../../Aragon-Repos/connect/packages/connect-disputable-voting/src";
-
 
 const RINKEBY_NETWORK = 4
 const ORGANIZATION_ADDRESS = '0xb85cd848cc26fb67f2bf38980b911cd56a9629fb'
