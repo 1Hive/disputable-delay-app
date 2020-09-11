@@ -32,6 +32,6 @@ export default createAppConnector<DisputableDelay, Config>(
       verbose,
     })
 
-    return new DisputableDelay(connectorTheGraph, app.address)
+    return new DisputableDelay(connectorTheGraph, app)
   }
 )

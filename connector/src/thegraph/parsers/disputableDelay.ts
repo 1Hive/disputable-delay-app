@@ -14,6 +14,7 @@ export function parseDisputableDelay(
   return {
     id: disputableDelay.id,
     dao: disputableDelay.dao,
+    agreement: disputableDelay.agreement,
     executionDelay: disputableDelay.executionDelay,
     delayedScriptsNewIndex: disputableDelay.delayedScriptsNewIndex,
   }

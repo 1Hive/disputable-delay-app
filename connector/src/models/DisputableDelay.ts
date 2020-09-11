@@ -1,19 +1,26 @@
+import { utils } from 'ethers'
 import {
   Address,
   SubscriptionCallback,
-  SubscriptionResult,
+  SubscriptionResult
 } from '../helpers/connect-types'
-import { subscription } from '@aragon/connect-core'
+import { subscription, App, ForwardingPath } from '@aragon/connect-core'
 import { IDisputableDelayConnector } from '../types'
 import DelayedScript from "./DelayedScript"
+import CollateralRequirement from './CollateralRequirement'
+
 
 export default class DisputableDelay {
-  #address: Address
+  #app: App
   #connector: IDisputableDelayConnector
 
-  constructor(connector: IDisputableDelayConnector, address: Address) {
+  readonly address: string
+
+  constructor(connector: IDisputableDelayConnector, app: App) {
+    this.#app = app
     this.#connector = connector
-    this.#address = address
+
+    this.address = app.address
   }
 
   async disconnect() {
@@ -21,27 +28,32 @@ export default class DisputableDelay {
   }
 
   async id(): Promise<string> {
-    const data = await this.#connector.disputableDelay(this.#address)
+    const data = await this.#connector.disputableDelay(this.address)
     return data.id
   }
 
   async dao(): Promise<string> {
-    const data = await this.#connector.disputableDelay(this.#address)
+    const data = await this.#connector.disputableDelay(this.address)
     return data.dao
   }
 
   async executionDelay(): Promise<string> {
-    const data = await this.#connector.disputableDelay(this.#address)
+    const data = await this.#connector.disputableDelay(this.address)
     return data.executionDelay
   }
 
   async delayedScriptsNewIndex(): Promise<string> {
-    const data = await this.#connector.disputableDelay(this.#address)
+    const data = await this.#connector.disputableDelay(this.address)
     return data.delayedScriptsNewIndex
   }
 
   async delayedScript(delayedExecutionId: string): Promise<DelayedScript> {
     return this.#connector.delayedScript(delayedExecutionId)
+  }
+
+  async agreement(): Promise<string> {
+    const data = await this.#connector.disputableDelay(this.address)
+    return data.agreement
   }
 
   onDelayedScript(
@@ -54,7 +66,7 @@ export default class DisputableDelay {
   }
 
   async delayedScripts({ first = 1000, skip = 0 } = {}): Promise<DelayedScript[]> {
-    return this.#connector.delayedScripts(this.#address, first, skip)
+    return this.#connector.delayedScripts(this.address, first, skip)
   }
 
   onDelayedScripts(
@@ -62,7 +74,31 @@ export default class DisputableDelay {
     callback?: SubscriptionCallback<DelayedScript[]>
   ): SubscriptionResult<DelayedScript[]> {
     return subscription<DelayedScript[]>(callback, (callback) =>
-      this.#connector.onDelayedScripts(this.#address, first, skip, callback)
+      this.#connector.onDelayedScripts(this.address, first, skip, callback)
     )
+  }
+
+  async currentCollateralRequirement(): Promise<CollateralRequirement> {
+    return this.#connector.currentCollateralRequirement(this.address)
+  }
+
+  onCurrentCollateralRequirement(
+    callback?: SubscriptionCallback<CollateralRequirement>
+  ): SubscriptionResult<CollateralRequirement> {
+    return subscription<CollateralRequirement>(callback, (callback) =>
+      this.#connector.onCurrentCollateralRequirement(this.address, callback)
+    )
+  }
+
+  async delayExecution(script: string, context: string, signerAddress: string): Promise<ForwardingPath> {
+    const intent = await this.#app.intent('delayExecution', [script, utils.toUtf8Bytes(context)], { actAs: signerAddress })
+
+    // approve action collateral
+    const agreement = await this.agreement()
+    const { tokenId: collateralToken, actionAmount } = await this.currentCollateralRequirement()
+    const preTransactions = await intent.buildApprovePreTransactions({ address: collateralToken, value: actionAmount, spender: agreement })
+
+    intent.applyPreTransactions(preTransactions)
+    return intent
   }
 }

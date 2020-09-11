@@ -109,6 +109,7 @@ function loadOrCreateDelay(delayAddress: Address): DisputableDelayEntity {
         const delayContract = DelayContract.bind(delayAddress)
         delay = new DisputableDelayEntity(delayAddress.toHexString())
         delay.dao = delayContract.kernel()
+        delay.agreement = delayContract.getAgreement()
     }
     return delay!
 }

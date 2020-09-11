@@ -11,6 +11,7 @@ import CollateralRequirement from './models/CollateralRequirement'
 export interface DisputableDelayData {
   id: string
   dao: string
+  agreement: string
   executionDelay: string
   delayedScriptsNewIndex: string
 }
@@ -39,12 +40,13 @@ export interface DelayedScriptData {
 
 export interface CollateralRequirementData {
   id: string
-  delayedScriptId: string
+  disputableDelayId: string
   tokenId: string
   tokenDecimals: string
   actionAmount: string
   challengeAmount: string
   challengeDuration: string
+  collateralRequirementId: string
 }
 
 export interface ArbitratorFeeData {
@@ -80,6 +82,11 @@ export interface IDisputableDelayConnector {
     first: number,
     skip: number,
     callback: SubscriptionCallback<DelayedScript[]>
+  ): SubscriptionHandler
+  currentCollateralRequirement(disputableDelay: string): Promise<CollateralRequirement>
+  onCurrentCollateralRequirement(
+    disputableVoting: string,
+    callback: SubscriptionCallback<CollateralRequirement>
   ): SubscriptionHandler
   collateralRequirement(delayedScriptId: string): Promise<CollateralRequirement>
   onCollateralRequirement(

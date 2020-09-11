@@ -5,6 +5,7 @@ export const GET_DISPUTABLE_DELAY = (type: string) => gql`
     disputableDelay(id: $disputableDelay) {
       id
       dao
+      agreement
       executionDelay
       delayedScriptsNewIndex
     }
@@ -74,6 +75,27 @@ export const ALL_DELAYED_SCRIPTS = (type: string) => gql`
       }
     }
   }
+`
+
+export const GET_CURRENT_COLLATERAL_REQUIREMENT = (type: string) => gql`
+    ${type} DisputableDelay($disputableDelay: String!) {
+      disputableDelay(id: $disputableDelay) {
+        collateralRequirement {
+          id
+          disputableDelay {
+            id
+          }
+          token {
+            id
+            decimals
+          }
+          actionAmount
+          challengeAmount
+          challengeDuration
+          collateralRequirementId
+        }
+      }
+    }
 `
 
 export const GET_COLLATERAL_REQUIREMENT = (type: string) => gql`

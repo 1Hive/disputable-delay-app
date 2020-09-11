@@ -18,6 +18,7 @@ import {
   parseArbitratorFee,
   parseCollateralRequirement,
 } from './parsers'
+import {parseCurrentCollateralRequirement} from "../../../../../Aragon-Repos/connect/packages/connect-disputable-voting/src/thegraph/parsers";
 
 // TODO: Update subgraph URL's
 export function subgraphUrlFromChainId(chainId: number) {
@@ -124,6 +125,26 @@ export default class DisputableDelayConnectorTheGraph
       { disputableDelay, first, skip },
       callback,
       (result: QueryResult) => parseDelayedScripts(result, this)
+    )
+  }
+
+  async currentCollateralRequirement(disputableDelay: string): Promise<CollateralRequirement> {
+    return this.#gql.performQueryWithParser<CollateralRequirement>(
+      queries.GET_CURRENT_COLLATERAL_REQUIREMENT('query'),
+      { disputableDelay },
+      (result: QueryResult) => parseCurrentCollateralRequirement(result, this)
+    )
+  }
+
+  onCurrentCollateralRequirement(
+    disputableDelay: string,
+    callback: SubscriptionCallback<CollateralRequirement>
+  ): SubscriptionHandler {
+    return this.#gql.subscribeToQueryWithParser<CollateralRequirement>(
+      queries.GET_CURRENT_COLLATERAL_REQUIREMENT('subscription'),
+      { disputableDelay },
+      callback,
+      (result: QueryResult) => parseCurrentCollateralRequirement(result, this)
     )
   }
 

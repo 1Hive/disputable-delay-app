@@ -10,6 +10,7 @@ enum DelayedScriptStatus {
 type DisputableDelay @entity {
   id: ID!
   dao: Bytes!
+  agreement: Bytes
   executionDelay: BigInt!
   delayedScriptsNewIndex: BigInt!
   collateralRequirement: CollateralRequirement
