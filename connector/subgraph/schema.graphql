@@ -26,6 +26,7 @@ type DelayedScript @entity {
   evmScript: Bytes!
   actionId: BigInt!
   submitter: Bytes!
+  context: Bytes!
   disputeId: BigInt!
   challengeId: BigInt!
   challenger: Bytes!

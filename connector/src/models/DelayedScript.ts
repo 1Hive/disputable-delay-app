@@ -19,6 +19,7 @@ export default class DelayedScript {
   readonly evmScript: string
   readonly actionId: string
   readonly submitter: string
+  readonly context: string
   readonly disputeId: string
   readonly challengeId: string
   readonly challenger: string
@@ -41,6 +42,7 @@ export default class DelayedScript {
     this.evmScript = data.evmScript
     this.actionId = data.actionId
     this.submitter = data.submitter
+    this.context = data.context
     this.disputeId = data.disputeId
     this.challengeId = data.challengeId
     this.challenger = data.challenger

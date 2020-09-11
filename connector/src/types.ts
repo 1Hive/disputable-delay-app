@@ -25,6 +25,7 @@ export interface DelayedScriptData {
   evmScript: string
   actionId: string
   submitter: string
+  context: string
   disputeId: string
   challengeId: string
   challenger: string

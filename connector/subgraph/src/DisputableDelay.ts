@@ -43,6 +43,7 @@ export function handleDelayedScriptStored(event: DelayedScriptStoredEvent): void
     delayedScript.evmScript = delayedScriptData.value3
     delayedScript.actionId = delayedScriptData.value4
     delayedScript.submitter = delayedScriptData.value5
+    delayedScript.context = event.params.context
     delayedScript.disputeId = BigInt.fromI32(0)
     delayedScript.challengeId = BigInt.fromI32(0)
     delayedScript.challenger = Address.fromString('0x0000000000000000000000000000000000000000')

@@ -46,7 +46,7 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
     mapping (uint256 => DelayedScript) public delayedScripts;
 
     event ExecutionDelaySet(uint64 indexed executionDelay);
-    event DelayedScriptStored(uint256 indexed delayedScriptId, uint256 indexed actionId, bytes evmScript);
+    event DelayedScriptStored(uint256 indexed delayedScriptId, uint256 indexed actionId, bytes evmScript, bytes context);
     event ExecutionPaused(uint256 indexed delayedScriptId, uint256 indexed challengeId);
     event ExecutionResumed(uint256 indexed delayedScriptId);
     event ExecutionCancelled(uint256 indexed delayedScriptId);
@@ -243,7 +243,7 @@ contract DisputableDelay is IForwarderWithContext, DisputableAragonApp {
         delayedScripts[delayedScriptIndex] =
             DelayedScript(getTimestamp64().add(executionDelay), 0, DelayedScriptStatus.Active, _evmScript, actionId, msg.sender);
 
-        emit DelayedScriptStored(delayedScriptIndex, actionId, _evmScript);
+        emit DelayedScriptStored(delayedScriptIndex, actionId, _evmScript, _context);
         return delayedScriptIndex;
     }
 

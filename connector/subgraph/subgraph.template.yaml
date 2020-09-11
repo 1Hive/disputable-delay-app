@@ -38,7 +38,7 @@ templates:
       eventHandlers:
         - event: ExecutionDelaySet(indexed uint64)
           handler: handleExecutionDelaySet
-        - event: DelayedScriptStored(indexed uint256,indexed uint256,bytes)
+        - event: DelayedScriptStored(indexed uint256,indexed uint256,bytes,bytes)
           handler: handleDelayedScriptStored
         - event: ExecutionPaused(indexed uint256,indexed uint256)
           handler: handleExecutionPaused

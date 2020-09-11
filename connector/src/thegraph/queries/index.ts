@@ -25,6 +25,7 @@ export const GET_DELAYED_SCRIPT = (type: string) => gql`
       evmScript
       actionId
       submitter
+      context
       disputeId
       challengeId
       challenger
