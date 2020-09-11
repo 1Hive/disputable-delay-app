@@ -14,7 +14,7 @@ export const GET_DISPUTABLE_DELAY = (type: string) => gql`
 
 export const GET_DELAYED_SCRIPT = (type: string) => gql`
   ${type} DelayedScript($delayedScriptId: String!) {
-    vote(id: $delayedScriptId) {
+    delayedScript(id: $delayedScriptId) {
       id
       disputableDelay { 
         id
@@ -48,7 +48,7 @@ export const ALL_DELAYED_SCRIPTS = (type: string) => gql`
   ${type} DelayedScripts($disputableDelay: String!, $first: Int!, $skip: Int!) {
     delayedScripts(where: {
       disputableDelay: $disputableDelay
-    }, orderBy: startDate, orderDirection: asc, first: $first, skip: $skip) {
+    }, orderBy: delayedScriptId, orderDirection: asc, first: $first, skip: $skip) {
       id
       disputableDelay { 
         id
@@ -60,6 +60,7 @@ export const ALL_DELAYED_SCRIPTS = (type: string) => gql`
       evmScript
       actionId
       submitter
+      context
       disputeId
       challengeId
       challenger
@@ -103,6 +104,7 @@ export const GET_COLLATERAL_REQUIREMENT = (type: string) => gql`
     delayedScript(id: $delayedScriptId) {
       collateralRequirement {
         id
+        collateralRequirementId
         actionAmount
         challengeAmount
         challengeDuration

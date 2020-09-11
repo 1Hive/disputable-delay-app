@@ -28,13 +28,14 @@ describe.only('DisputableDelay', () => {
     test('returns the disputable delay data', () => {
       expect(disputableDelay.id).toBe(DISPUTABLE_DELAY_ADDRESS)
       expect(disputableDelay.dao).toBe(
-        '0xcd4016b1482a99929beaa6c1a004235ea12b8732'
+        '0xb85cd848cc26fb67f2bf38980b911cd56a9629fb'
       )
+      expect(disputableDelay.agreement).toBe('asdf')
       expect(disputableDelay.executionDelay).toBe(
         '1000'
       )
       expect(disputableDelay.delayedScriptsNewIndex).toBe(
-        '3'
+        '2'
       )
     })
   })

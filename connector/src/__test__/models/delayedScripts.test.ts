@@ -9,8 +9,7 @@ import {
 } from '../../../src'
 
 const RINKEBY_NETWORK = 4
-const ORGANIZATION_NAME = '0xb85cd848cc26fb67f2bf38980b911cd56a9629fb'
-// const ORGANIZATION_NAME = 'ancashdao.aragonid.eth'
+const ORGANIZATION_ADDRESS = '0xb85cd848cc26fb67f2bf38980b911cd56a9629fb'
 const DISPUTABLE_DELAY_ADDRESS = '0x88453b60b4717b762f9499f991eedd37296efba8'
 const DELAY_SUBGRAPH_URL =
   'https://api.thegraph.com/subgraphs/name/1hive/aragon-disputable-delay-rinkeby'
@@ -19,7 +18,7 @@ describe('DisputableDelay', () => {
   let disputableDelay: DisputableDelay
 
   beforeAll(async () => {
-    const organization = await connect(ORGANIZATION_NAME, 'thegraph', { network: RINKEBY_NETWORK })
+    const organization = await connect(ORGANIZATION_ADDRESS, 'thegraph', { network: RINKEBY_NETWORK })
     const connector = new DisputableDelayConnectorTheGraph({ subgraphUrl: DELAY_SUBGRAPH_URL })
     const app = await organization.connection.orgConnector.appByAddress(organization, DISPUTABLE_DELAY_ADDRESS)
     disputableDelay = new DisputableDelay(connector, app)

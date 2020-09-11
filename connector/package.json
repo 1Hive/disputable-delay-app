@@ -38,6 +38,7 @@
   "dependencies": {
     "@aragon/connect-core": "^0.8.0-alpha.2",
     "@aragon/connect-thegraph": "^0.8.0-alpha.2",
+    "@aragon/connect": "^0.8.0-alpha.2",
     "graphql-tag": "^2.10.3"
   },
   "devDependencies": {

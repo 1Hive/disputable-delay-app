@@ -17,8 +17,8 @@ import {
   parseDelayedScripts,
   parseArbitratorFee,
   parseCollateralRequirement,
+  parseCurrentCollateralRequirement
 } from './parsers'
-import {parseCurrentCollateralRequirement} from "../../../../../Aragon-Repos/connect/packages/connect-disputable-voting/src/thegraph/parsers";
 
 // TODO: Update subgraph URL's
 export function subgraphUrlFromChainId(chainId: number) {

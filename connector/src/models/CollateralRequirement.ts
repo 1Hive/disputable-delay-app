@@ -1,5 +1,5 @@
 import { subscription } from '@aragon/connect-core'
-import { SubscriptionCallback, SubscriptionResult } from '@aragon/connect-types'
+import { SubscriptionCallback, SubscriptionResult } from '../helpers/connect-types'
 
 import ERC20 from './ERC20'
 import { formatBn } from '../helpers'
