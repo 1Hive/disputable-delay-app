@@ -12,7 +12,7 @@
     "deploy-mainnet": "scripts/deploy.sh 1hive disputable-delay mainnet",
     "deploy-mainnet-staging": "env STAGING=true scripts/deploy.sh 1hive disputable-delay mainnet",
     "deploy-rinkeby": "scripts/deploy.sh 1hive disputable-delay rinkeby",
-    "deploy-rinkeby-staging": "env STAGING=true scripts/deploy.sh 1hive disputable-delay rinkeby",
+    "deploy-rinkeby-staging": "env STAGING=true scripts/deploy.sh 1hive ddelay rinkeby",
     "deploy-xdai": "scripts/deploy.sh 1hive disputable-delay xdai"
   },
   "devDependencies": {

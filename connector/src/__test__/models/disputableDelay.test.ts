@@ -12,7 +12,7 @@ const RINKEBY_NETWORK = 4
 const ORGANIZATION_ADDRESS = '0xb85cd848cc26fb67f2bf38980b911cd56a9629fb'
 const DISPUTABLE_DELAY_ADDRESS = '0x88453b60b4717b762f9499f991eedd37296efba8'
 const DELAY_SUBGRAPH_URL =
-  'https://api.thegraph.com/subgraphs/name/1hive/aragon-disputable-delay-rinkeby'
+  'https://api.thegraph.com/subgraphs/name/1hive/aragon-ddelay-rinkeby-staging'
 
 
 describe('DisputableVoting', () => {
@@ -21,6 +21,9 @@ describe('DisputableVoting', () => {
   beforeAll(async () => {
     const organization = await connect(ORGANIZATION_ADDRESS, 'thegraph', { network: RINKEBY_NETWORK })
     console.log("ORG", organization)
+    // console.log("ORG Connection", organization.connection)
+    // console.log("Org Connection Connector", organization.connection.orgConnector)
+    // console.log("Org Connection Connector appbyaddress", organization.connection.orgConnector.appByAddress)
 
     const connector = new DisputableDelayConnectorTheGraph({ subgraphUrl: DELAY_SUBGRAPH_URL })
     console.log("Connector", connector)

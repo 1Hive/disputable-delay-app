@@ -3,7 +3,7 @@ import { DisputableDelayConnectorTheGraph } from '../../../src'
 
 const DISPUTABLE_DELAY_ADDRESS = '0x88453b60b4717b762f9499f991eedd37296efba8'
 const DELAY_SUBGRAPH_URL =
-  'https://api.thegraph.com/subgraphs/name/1hive/aragon-disputable-delay-rinkeby'
+  'https://api.thegraph.com/subgraphs/name/1hive/aragon-ddelay-rinkeby-staging'
 
 describe.only('DisputableDelay', () => {
   let connector: DisputableDelayConnectorTheGraph

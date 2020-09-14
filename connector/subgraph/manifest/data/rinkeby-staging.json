@@ -3,9 +3,9 @@
   "dataSources": {
     "Organizations": [
       {
-        "name": "DisputableVoting",
-        "address": "0x51A41E43af0774565f0be5cEbC50C693CC19E4eE",
-        "startBlock": "7087818"
+        "name": "DisputableDelay",
+        "address": "0xb85cd848cc26fb67f2bf38980b911cd56a9629fb",
+        "startBlock": "7177729"
       }
     ],
     "OrganizationFactories": [],
