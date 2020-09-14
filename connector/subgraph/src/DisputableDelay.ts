@@ -21,7 +21,6 @@ import {
 export function handleExecutionDelaySet(event: ExecutionDelaySetEvent): void {
     const delayContract = DelayContract.bind(event.address)
     const delay = loadOrCreateDelay(event.address)
-    delay.executionDelay = delayContract.executionDelay()
     delay.delayedScriptsNewIndex = delayContract.delayedScriptsNewIndex()
     delay.save()
 }
@@ -103,13 +102,15 @@ export function buildDelayedScriptId(delay: Address, delayedScriptId: BigInt): s
     return delay.toHexString() + "-delayedscript-" + delayedScriptId.toString()
 }
 
-function loadOrCreateDelay(delayAddress: Address): DisputableDelayEntity {
+export function loadOrCreateDelay(delayAddress: Address): DisputableDelayEntity {
     let delay = DisputableDelayEntity.load(delayAddress.toHexString())
     if (!delay) {
         const delayContract = DelayContract.bind(delayAddress)
         delay = new DisputableDelayEntity(delayAddress.toHexString())
         delay.dao = delayContract.kernel()
         delay.agreement = delayContract.getAgreement()
+        delay.executionDelay = delayContract.executionDelay()
+        delay.delayedScriptsNewIndex = delayContract.delayedScriptsNewIndex()
     }
     return delay!
 }

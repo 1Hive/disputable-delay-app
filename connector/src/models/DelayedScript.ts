@@ -27,6 +27,7 @@ export default class DelayedScript {
   readonly settledAt: string
   readonly disputedAt: string
   readonly executedAt: string
+  readonly collateralRequirementId: string
   readonly submitterArbitratorFeeId: string
   readonly challengerArbitratorFeeId: string
 
@@ -50,12 +51,13 @@ export default class DelayedScript {
     this.settledAt = data.settledAt
     this.disputedAt = data.disputedAt
     this.executedAt = data.executedAt
+    this.collateralRequirementId = data.collateralRequirementId
     this.submitterArbitratorFeeId = data.submitterArbitratorFeeId
     this.challengerArbitratorFeeId = data.challengerArbitratorFeeId
   }
 
   async collateralRequirement(): Promise<CollateralRequirement> {
-    return this.#connector.collateralRequirement(this.id)
+    return this.#connector.collateralRequirement(this.collateralRequirementId)
   }
 
   onCollateralRequirement(

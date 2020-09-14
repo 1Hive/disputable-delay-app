@@ -47,8 +47,8 @@ export default class DisputableDelay {
     return data.delayedScriptsNewIndex
   }
 
-  async delayedScript(delayedExecutionId: string): Promise<DelayedScript> {
-    return this.#connector.delayedScript(delayedExecutionId)
+  async delayedScript(delayedScriptId: string): Promise<DelayedScript> {
+    return this.#connector.delayedScript(delayedScriptId)
   }
 
   async agreement(): Promise<string> {

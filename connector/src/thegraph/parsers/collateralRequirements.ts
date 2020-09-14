@@ -44,11 +44,11 @@ export function parseCurrentCollateralRequirement(
   result: QueryResult,
   connector: any
 ): CollateralRequirement {
-  const disputableVoting = result.data.disputableVoting
+  const disputableDelay = result.data.disputableDelay
 
-  if (!disputableVoting || !disputableVoting.collateralRequirement) {
+  if (!disputableDelay || !disputableDelay.collateralRequirement) {
     throw new Error('Unable to parse current collateral requirement.')
   }
 
-  return buildCollateralRequirement(disputableVoting.collateralRequirement, connector)
+  return buildCollateralRequirement(disputableDelay.collateralRequirement, connector)
 }

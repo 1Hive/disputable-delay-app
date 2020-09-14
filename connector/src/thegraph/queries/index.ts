@@ -34,6 +34,9 @@ export const GET_DELAYED_SCRIPT = (type: string) => gql`
       settledAt
       disputedAt
       executedAt
+      collateralRequirement {
+        id
+      }
       submitterArbitratorFee {
         id
       }
@@ -68,6 +71,9 @@ export const ALL_DELAYED_SCRIPTS = (type: string) => gql`
       settledAt
       disputedAt
       executedAt
+      collateralRequirement {
+        id
+      }
       submitterArbitratorFee {
         id
       }
@@ -100,24 +106,22 @@ export const GET_CURRENT_COLLATERAL_REQUIREMENT = (type: string) => gql`
 `
 
 export const GET_COLLATERAL_REQUIREMENT = (type: string) => gql`
-  ${type} CollateralRequirement($delayedScriptId: String!) {
-    delayedScript(id: $delayedScriptId) {
-      collateralRequirement {
+  ${type} CollateralRequirement($collateralRequirementId: String!) {
+    collateralRequirement(id: $collateralRequirementId) {
+      id
+      collateralRequirementId
+      actionAmount
+      challengeAmount
+      challengeDuration
+      disputableDelay {
         id
-        collateralRequirementId
-        actionAmount
-        challengeAmount
-        challengeDuration
-        delayedScript {
-          id
-        }
-        token {
-          id
-          decimals
-        }
+      }
+      token {
+        id
+        decimals
       }
     }
-  }
+  }  
 `
 
 export const GET_ARBITRATOR_FEE = (type: string) => gql`
@@ -125,7 +129,7 @@ export const GET_ARBITRATOR_FEE = (type: string) => gql`
     arbitratorFee(id: $arbitratorFeeId) {
       id
       amount
-      vote {
+      delayedScript {
         id
       }
       token {

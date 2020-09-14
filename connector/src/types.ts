@@ -34,6 +34,7 @@ export interface DelayedScriptData {
   settledAt: string
   disputedAt: string
   executedAt: string
+  collateralRequirementId: string
   submitterArbitratorFeeId: string
   challengerArbitratorFeeId: string
 }

@@ -148,21 +148,21 @@ export default class DisputableDelayConnectorTheGraph
     )
   }
 
-  async collateralRequirement(delayedScriptId: string): Promise<CollateralRequirement> {
+  async collateralRequirement(collateralRequirementId: string): Promise<CollateralRequirement> {
     return this.#gql.performQueryWithParser<CollateralRequirement>(
       queries.GET_COLLATERAL_REQUIREMENT('query'),
-      { delayedScriptId },
+      { collateralRequirementId },
       (result: QueryResult) => parseCollateralRequirement(result, this)
     )
   }
 
   onCollateralRequirement(
-    delayedScriptId: string,
+    collateralRequirementId: string,
     callback: SubscriptionCallback<CollateralRequirement>
   ): SubscriptionHandler {
     return this.#gql.subscribeToQueryWithParser<CollateralRequirement>(
       queries.GET_COLLATERAL_REQUIREMENT('subscription'),
-      { delayedScriptId },
+      { collateralRequirementId },
       callback,
       (result: QueryResult) => parseCollateralRequirement(result, this)
     )

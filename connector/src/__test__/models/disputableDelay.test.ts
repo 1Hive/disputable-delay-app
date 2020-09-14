@@ -1,11 +1,9 @@
 import { ethers } from 'ethers'
 import { connect } from '@aragon/connect'
-
-import {
+import connectDisputableDelay, {
   ERC20,
   DisputableDelay,
   CollateralRequirement,
-  DisputableDelayConnectorTheGraph,
 } from '../../../src'
 
 const RINKEBY_NETWORK = 4
@@ -15,24 +13,13 @@ const DELAY_SUBGRAPH_URL =
   'https://api.thegraph.com/subgraphs/name/1hive/aragon-ddelay-rinkeby-staging'
 
 
-describe('DisputableVoting', () => {
+describe.only('DisputableDelay', () => {
   let disputableDelay: DisputableDelay
 
   beforeAll(async () => {
     const organization = await connect(ORGANIZATION_ADDRESS, 'thegraph', { network: RINKEBY_NETWORK })
-    console.log("ORG", organization)
-    // console.log("ORG Connection", organization.connection)
-    // console.log("Org Connection Connector", organization.connection.orgConnector)
-    // console.log("Org Connection Connector appbyaddress", organization.connection.orgConnector.appByAddress)
-
-    const connector = new DisputableDelayConnectorTheGraph({ subgraphUrl: DELAY_SUBGRAPH_URL })
-    console.log("Connector", connector)
-
-    const app = await organization.connection.orgConnector.appByAddress(organization, DISPUTABLE_DELAY_ADDRESS)
-    console.log("App", app)
-
-    disputableDelay = new DisputableDelay(connector, app)
-    console.log("DisputableDelay", disputableDelay)
+    const delayApp = await organization.app('disputable-delay')
+    disputableDelay = await connectDisputableDelay(delayApp, ['thegraph', { subgraphUrl: DELAY_SUBGRAPH_URL} ])
   })
 
   afterAll(async () => {
@@ -46,17 +33,17 @@ describe('DisputableVoting', () => {
       collateralRequirement = await disputableDelay.currentCollateralRequirement()
     })
 
-    test.only('has a collateral requirement associated', async () => {
+    test('has a collateral requirement associated', async () => {
       expect(collateralRequirement.id).toBe(`${DISPUTABLE_DELAY_ADDRESS}-collateral-${collateralRequirement.collateralRequirementId}`)
       expect(collateralRequirement.tokenId).toBe('0x3af6b2f907f0c55f279e0ed65751984e6cdc4a42')
-      expect(collateralRequirement.actionAmount).toBe('1000000000000000000')
-      expect(collateralRequirement.formattedActionAmount).toBe('1.00')
-      expect(collateralRequirement.challengeAmount).toBe('2000000000000000000')
-      expect(collateralRequirement.formattedChallengeAmount).toBe('2.00')
+      expect(collateralRequirement.actionAmount).toBe('0')
+      expect(collateralRequirement.formattedActionAmount).toBe('0.00')
+      expect(collateralRequirement.challengeAmount).toBe('0')
+      expect(collateralRequirement.formattedChallengeAmount).toBe('0.00')
       expect(collateralRequirement.challengeDuration).toBe('259200')
     })
 
-    test('can requests the related token info', async () => {
+    test('can request the related token info', async () => {
       const token: ERC20 = await collateralRequirement.token()
 
       expect(token.id).toBe('0x3af6b2f907f0c55f279e0ed65751984e6cdc4a42')
@@ -73,15 +60,21 @@ describe('DisputableVoting', () => {
 
     it('returns a new vote intent', async () => {
       const delayABI = new ethers.utils.Interface(['function delayExecution(bytes,bytes)'])
+      const approveABI = new ethers.utils.Interface(['function approve(address,uint256)'])
       const intent = await disputableDelay.delayExecution(SCRIPT, CONTEXT, SIGNER_ADDRESS)
+      const collateralRequirement = await disputableDelay.currentCollateralRequirement()
 
-      expect(intent.transactions.length).toBe(1)
-      expect(intent.destination.address).toBe(DISPUTABLE_DELAY_ADDRESS)
+      expect(intent.transactions.length).toBe(2)
 
-      const transaction = intent.transactions[0]
-      expect(transaction.to.toLowerCase()).toBe(DISPUTABLE_DELAY_ADDRESS)
-      expect(transaction.from).toBe(SIGNER_ADDRESS)
-      expect(transaction.data).toBe(delayABI.encodeFunctionData('delayExecution', [SCRIPT, ethers.utils.toUtf8Bytes(CONTEXT)]))
+      const transaction1 = intent.transactions[0]
+      expect(transaction1.to.toLowerCase()).toBe('0x3af6b2f907f0c55f279e0ed65751984e6cdc4a42')
+      expect(transaction1.from).toBe(SIGNER_ADDRESS)
+      expect(transaction1.data).toBe(approveABI.encodeFunctionData('approve', ['0x496083895042cf25ea838f6856cfd18cc8223ee7', collateralRequirement.actionAmount]))
+
+      const transaction2 = intent.transactions[1]
+      expect(transaction2.to.toLowerCase()).toBe(DISPUTABLE_DELAY_ADDRESS)
+      expect(transaction2.from).toBe(SIGNER_ADDRESS)
+      expect(transaction2.data).toBe(delayABI.encodeFunctionData('delayExecution', [SCRIPT, ethers.utils.toUtf8Bytes(CONTEXT)]))
     })
   })
 })

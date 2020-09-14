@@ -1,5 +1,5 @@
 import {BigInt, Address} from '@graphprotocol/graph-ts'
-import {buildDelayedScriptId, buildERC20, updateDelayedScript} from './DisputableDelay'
+import {buildDelayedScriptId, buildERC20, loadOrCreateDelay} from './DisputableDelay'
 import {
   DisputableDelay as DisputableDelayEntity,
   DelayedScript as DelayedScriptEntity,
@@ -17,25 +17,23 @@ import {
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
 export function handleCollateralRequirementChanged(event: CollateralRequirementChangedEvent): void {
-  const disputableDelay = DisputableDelayEntity.load(event.params.disputable.toHexString())
+  const disputableDelay = loadOrCreateDelay(event.params.disputable)
 
-  if (disputableDelay) {
-    const agreementApp = AgreementContract.bind(event.address)
-    const requirementId = buildCollateralRequirementId(event.params.disputable, event.params.collateralRequirementId)
+  const agreementApp = AgreementContract.bind(event.address)
+  const requirementId = buildCollateralRequirementId(event.params.disputable, event.params.collateralRequirementId)
 
-    const requirement = new CollateralRequirementEntity(requirementId)
-    const requirementData = agreementApp.getCollateralRequirement(event.params.disputable, event.params.collateralRequirementId)
-    requirement.token = buildERC20(requirementData.value0)
-    requirement.disputableDelay = event.params.disputable.toHexString()
-    requirement.challengeDuration = requirementData.value1
-    requirement.actionAmount = requirementData.value2
-    requirement.challengeAmount = requirementData.value3
-    requirement.collateralRequirementId = event.params.collateralRequirementId
-    requirement.save()
+  const requirement = new CollateralRequirementEntity(requirementId)
+  const requirementData = agreementApp.getCollateralRequirement(event.params.disputable, event.params.collateralRequirementId)
+  requirement.token = buildERC20(requirementData.value0)
+  requirement.disputableDelay = event.params.disputable.toHexString()
+  requirement.challengeDuration = requirementData.value1
+  requirement.actionAmount = requirementData.value2
+  requirement.challengeAmount = requirementData.value3
+  requirement.collateralRequirementId = event.params.collateralRequirementId
+  requirement.save()
 
-    disputableDelay.collateralRequirement = requirementId
-    disputableDelay.save()
-  }
+  disputableDelay.collateralRequirement = requirementId
+  disputableDelay.save()
 }
 
 export function handleActionDisputed(event: ActionDisputedEvent): void {
