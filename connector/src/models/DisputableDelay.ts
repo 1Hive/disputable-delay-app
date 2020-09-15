@@ -1,6 +1,5 @@
 import { utils } from 'ethers'
 import {
-  Address,
   SubscriptionCallback,
   SubscriptionResult
 } from '../helpers/connect-types'

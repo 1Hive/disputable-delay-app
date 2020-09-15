@@ -13,7 +13,7 @@ const DELAY_SUBGRAPH_URL =
   'https://api.thegraph.com/subgraphs/name/1hive/aragon-ddelay-rinkeby-staging'
 
 
-describe.only('DisputableDelay', () => {
+describe('DisputableDelay', () => {
   let disputableDelay: DisputableDelay
 
   beforeAll(async () => {

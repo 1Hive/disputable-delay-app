@@ -1,6 +1,6 @@
 {
   "name": "@1hive/connect-disputable-delay",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "private": false,
   "license": "LGPL-3.0-or-later",
   "description": "Access and interact with Aragon Organizations and their apps.",
@@ -39,7 +39,8 @@
     "@aragon/connect-core": "^0.8.0-alpha.2",
     "@aragon/connect-thegraph": "^0.8.0-alpha.2",
     "@aragon/connect": "^0.8.0-alpha.2",
-    "graphql-tag": "^2.10.3"
+    "graphql-tag": "^2.10.3",
+    "ethers": "^5.0.13"
   },
   "devDependencies": {
     "@types/jest": "^26.0.0",

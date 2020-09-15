@@ -26,56 +26,6 @@ describe('DisputableDelay', () => {
     await disputableDelay.disconnect()
   })
 
-  describe('end date', () => {
-    let delayedScript: DelayedScript, settledDelayedScript: DelayedScript
-
-    beforeEach(async () => {
-      delayedScript = await disputableDelay.delayedScript(`${DISPUTABLE_DELAY_ADDRESS}-delayedscript-0`)
-      settledDelayedScript = await disputableDelay.delayedScript(`${DISPUTABLE_DELAY_ADDRESS}-delayedscript-2`)
-    })
-
-    // describe('when it was not flipped', () => {
-    //   test('computes the end date properly', async () => {
-    //     const expectedScheduledVoteEndDate =
-    //       parseInt(delayedScript.startDate) +
-    //       parseInt(delayedScript.duration)
-    //
-    //     expect(delayedScript.endDate).toBe(expectedScheduledVoteEndDate.toString())
-    //
-    //     const expectedSettledVoteEndDate =
-    //       parseInt(settledDelayedScript.startDate) +
-    //       parseInt(settledDelayedScript.duration) +
-    //       parseInt(settledDelayedScript.pauseDuration)
-    //
-    //     expect(settledDelayedScript.endDate).toBe(expectedSettledVoteEndDate.toString())
-    //   })
-    // })
-    //
-    // describe('when it was flipped', () => {
-    //   beforeEach(async () => {
-    //     Object.defineProperty(delayedScript, 'wasFlipped', { value: true })
-    //     Object.defineProperty(settledDelayedScript, 'wasFlipped', { value: true })
-    //   })
-    //
-    //   test('computes the end date properly', async () => {
-    //     const expectedScheduledVoteEndDate =
-    //       parseInt(delayedScript.startDate) +
-    //       parseInt(delayedScript.duration) +
-    //       parseInt(delayedScript.quietEndingExtension)
-    //
-    //     expect(delayedScript.endDate).toBe(expectedScheduledVoteEndDate.toString())
-    //
-    //     const expectedSettledVoteEndDate =
-    //       parseInt(settledDelayedScript.startDate) +
-    //       parseInt(settledDelayedScript.duration) +
-    //       parseInt(settledDelayedScript.pauseDuration) +
-    //       parseInt(settledDelayedScript.quietEndingExtension)
-    //
-    //     expect(settledDelayedScript.endDate).toBe(expectedSettledVoteEndDate.toString())
-    //   })
-    // })
-  })
-
   describe('collateralRequirement', () => {
     const delayedScriptId = `${DISPUTABLE_DELAY_ADDRESS}-delayedscript-0`
 
@@ -104,30 +54,28 @@ describe('DisputableDelay', () => {
     })
   })
 
-  // TODO: Create a disputed delayed script and check it has an arbitrator
-
   describe('arbitrator fees', () => {
-    let delayedScript: DelayedScript
-    const delayedScriptId = `${DISPUTABLE_DELAY_ADDRESS}-delayedscript-1`
+    let disputedDelayedScript: DelayedScript
+    const delayedScriptId = `${DISPUTABLE_DELAY_ADDRESS}-delayedscript-3`
 
     beforeAll(async () => {
-      delayedScript = await disputableDelay.delayedScript(delayedScriptId)
+      disputedDelayedScript = await disputableDelay.delayedScript(delayedScriptId)
     })
 
-    test('can requests the submitter arbitrator fees', async () => {
-      const artbiratorFee = (await delayedScript.submitterArbitratorFee())!
+    test('can request the submitter arbitrator fees', async () => {
+      const artbiratorFee = (await disputedDelayedScript.submitterArbitratorFee())!
 
       expect(artbiratorFee.id).toBe(`${delayedScriptId}-submitter`)
       expect(artbiratorFee.tokenId).toBe('0x3af6b2f907f0c55f279e0ed65751984e6cdc4a42')
       expect(artbiratorFee.formattedAmount).toBe('150.00')
     })
 
-    // test('can requests the submitter arbitrator fees', async () => {
-    //   const artbiratorFee = (await delayedScript.challengerArbitratorFee())!
-    //
-    //   expect(artbiratorFee.id).toBe(`${delayedScriptId}-challenger`)
-    //   expect(artbiratorFee.tokenId).toBe('0x3af6b2f907f0c55f279e0ed65751984e6cdc4a42')
-    //   expect(artbiratorFee.formattedAmount).toBe('150.00')
-    // })
+    test('can request the challenger arbitrator fees', async () => {
+      const artbiratorFee = (await disputedDelayedScript.challengerArbitratorFee())!
+
+      expect(artbiratorFee.id).toBe(`${delayedScriptId}-challenger`)
+      expect(artbiratorFee.tokenId).toBe('0x3af6b2f907f0c55f279e0ed65751984e6cdc4a42')
+      expect(artbiratorFee.formattedAmount).toBe('150.00')
+    })
   })
 })

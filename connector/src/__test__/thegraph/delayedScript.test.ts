@@ -31,15 +31,6 @@ describe('DisputableDelay votes', () => {
       expect(delayedScript.actionId).toBe('1')
       expect(delayedScript.submitter).toBe('0xff3b8aad3dbfaf7ffea00a96e33aa18952b4f9b7')
       expect(delayedScript.context).toBe('0xabcd')
-      // expect(delayedScript.disputeId).toBe('0')
-      // expect(delayedScript.challengeId).toBe('0')
-      // expect(delayedScript.challenger).toBe('')
-      // expect(delayedScript.challengeEndDate).toBe(
-      // expect(delayedScript.settledAt).toBe(
-      // expect(delayedScript.disputedAt).toBe(
-      // expect(delayedScript.executedAt).toBe(
-      // expect(delayedScript.submitterArbitratorFeeId).toBe(
-      // expect(delayedScript.challengerArbitratorFeeId).toBe(
     })
   })
 
