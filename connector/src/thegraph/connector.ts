@@ -26,7 +26,7 @@ export function subgraphUrlFromChainId(chainId: number) {
   //   return '???'
   // }
   if (chainId === 4) {
-    return 'https://api.thegraph.com/subgraphs/name/aragon/aragon-dvoting-rinkeby'
+    return 'https://api.thegraph.com/subgraphs/name/1hive/aragon-ddelay-rinkeby-staging'
   }
   // if (chainId === 100) {
   //   return '???'
