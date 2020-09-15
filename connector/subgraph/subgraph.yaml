@@ -552,10 +552,10 @@ templates:
         - Agreement
         - ERC20
       abis:
-        - name: Agreement
-          file: ./abis/Agreement.json
         - name: DisputableDelay
           file: ./abis/DisputableDelay.json
+        - name: Agreement
+          file: ./abis/Agreement.json
         - name: ERC20
           file: ./abis/MiniMeToken.json
       eventHandlers:
