@@ -16,10 +16,17 @@ import {
     ExecutedScript as ExecutedScriptEvent
 } from '../generated/templates/DisputableDelay/DisputableDelay'
 
+import { log } from '@graphprotocol/graph-ts'
+
 /* eslint-disable @typescript-eslint/no-use-before-define */
+
+
 
 export function handleExecutionDelaySet(event: ExecutionDelaySetEvent): void {
     const delayContract = DelayContract.bind(event.address)
+
+    log.warning('ExecutionDelaySetEvent DisputableDelay: {}', [event.address.toHexString()])
+
     const delay = loadOrCreateDelay(event.address)
     delay.delayedScriptsNewIndex = delayContract.delayedScriptsNewIndex()
     delay.save()

@@ -1,10 +1,10 @@
 import {BigInt, Address} from '@graphprotocol/graph-ts'
 import {buildDelayedScriptId, buildERC20, loadOrCreateDelay} from './DisputableDelay'
 import {
-  DisputableDelay as DisputableDelayEntity,
   DelayedScript as DelayedScriptEntity,
   ArbitratorFee as ArbitratorFeeEntity,
-  CollateralRequirement as CollateralRequirementEntity
+  CollateralRequirement as CollateralRequirementEntity,
+  DisputableDelay as DisputableDelayEntity
 } from '../generated/schema'
 import {
   Agreement as AgreementContract,
@@ -14,10 +14,14 @@ import {
   ActionChallenged as ActionChallengedEvent
 } from '../generated/templates/Agreement/Agreement'
 
+import { log } from '@graphprotocol/graph-ts'
+
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
 export function handleCollateralRequirementChanged(event: CollateralRequirementChangedEvent): void {
-  const disputableDelay = loadOrCreateDelay(event.params.disputable)
+  const disputableDelay = DisputableDelayEntity.load(event.params.disputable.toHexString())
+
+  log.warning('CollateralRequirementChangedEvent DisputableDelay: {}', [event.params.disputable.toHexString()])
 
   const agreementApp = AgreementContract.bind(event.address)
   const requirementId = buildCollateralRequirementId(event.params.disputable, event.params.collateralRequirementId)
@@ -32,8 +36,10 @@ export function handleCollateralRequirementChanged(event: CollateralRequirementC
   requirement.collateralRequirementId = event.params.collateralRequirementId
   requirement.save()
 
-  disputableDelay.collateralRequirement = requirementId
-  disputableDelay.save()
+  if (disputableDelay) {
+    disputableDelay.collateralRequirement = requirementId
+    disputableDelay.save()
+  }
 }
 
 export function handleActionDisputed(event: ActionDisputedEvent): void {
