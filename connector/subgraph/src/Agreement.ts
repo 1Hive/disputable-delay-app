@@ -4,7 +4,6 @@ import {
   DelayedScript as DelayedScriptEntity,
   ArbitratorFee as ArbitratorFeeEntity,
   CollateralRequirement as CollateralRequirementEntity,
-  DisputableDelay as DisputableDelayEntity
 } from '../generated/schema'
 import {
   Agreement as AgreementContract,
@@ -13,8 +12,6 @@ import {
   ActionSettled as ActionSettledEvent,
   ActionChallenged as ActionChallengedEvent
 } from '../generated/templates/Agreement/Agreement'
-
-import { log } from '@graphprotocol/graph-ts'
 
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
