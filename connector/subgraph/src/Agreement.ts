@@ -19,9 +19,7 @@ import { log } from '@graphprotocol/graph-ts'
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
 export function handleCollateralRequirementChanged(event: CollateralRequirementChangedEvent): void {
-  const disputableDelay = DisputableDelayEntity.load(event.params.disputable.toHexString())
-
-  log.warning('CollateralRequirementChangedEvent DisputableDelay: {}', [event.params.disputable.toHexString()])
+  const disputableDelay = loadOrCreateDelay(event.params.disputable)
 
   const agreementApp = AgreementContract.bind(event.address)
   const requirementId = buildCollateralRequirementId(event.params.disputable, event.params.collateralRequirementId)

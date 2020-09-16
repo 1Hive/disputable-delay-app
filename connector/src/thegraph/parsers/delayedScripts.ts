@@ -46,7 +46,7 @@ function buildDelayedScript(delayedScript: any, connector: any): DelayedScript {
     settledAt,
     disputedAt,
     executedAt,
-    collateralRequirementId: collateralRequirement.id,
+    collateralRequirementId: collateralRequirement ? collateralRequirement.id : null,
     submitterArbitratorFeeId: submitterArbitratorFee ? submitterArbitratorFee.id : null,
     challengerArbitratorFeeId: challengerArbitratorFee ? challengerArbitratorFee.id : null
   }
