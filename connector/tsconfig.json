@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "alwaysStrict": true,
     "baseUrl": ".",
     "composite": true,
@@ -8,16 +7,16 @@
     "declarationMap": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "ESNext",
+    "module": "commonjs",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
     "target": "es2019",
-    "outDir": "dist/esm",
-    "rootDir": "src"
+    "rootDir": "src",
+    "outDir": "dist/esm"
   },
-  "include": ["src"],
-  "exclude": ["dist", "**/__test__/**"]
+  "include": ["./src/**/*.ts"],
+  "exclude": ["dist", "node_modules", "subgraph", "**/__test__/**"]
 }
