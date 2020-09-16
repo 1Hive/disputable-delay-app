@@ -1,0 +1,17 @@
+{
+  "network": "rinkeby",
+  "dataSources": {
+    "Organizations": [
+      {
+        "name": "DisputableDelay",
+        "address": "0xb85cd848cc26fb67f2bf38980b911cd56a9629fb",
+        "startBlock": "7177729"
+      }
+    ],
+    "OrganizationFactories": [],
+    "OrganizationTemplates": [],
+    "LegacyOrganizationTemplates": [],
+    "TokenFactories": [],
+    "Tokens": []
+  }
+}
